@@ -116,8 +116,46 @@
   * {
     @apply border-border outline-ring/50 transition-colors duration-200;
   }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    scrollbar-gutter: stable;
+  }
+
+  .backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  * {
+    ::-webkit-scrollbar {
+      width: 2px;
+      height: 2px;
+    }
+    ::-webkit-scrollbar-track {
+      background: var(--color-background);
+    }
+    ::-webkit-scrollbar-thumb {
+      background-color: var(--color-primary);
+    }
+  }
+  
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    ::-webkit-scrollbar {
+      display: none;
+    }
   }
 }

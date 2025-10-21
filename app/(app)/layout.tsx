@@ -1,4 +1,5 @@
 import { Navbar } from "@/components/layout/navbar";
+import { FloatingTimerBadge } from "@/components/timer/floating-timer-badge";
 
 export default function AppLayout({
   children,
@@ -11,6 +12,7 @@ export default function AppLayout({
       <main className="min-h-screen">
         {children}
       </main>
+      <FloatingTimerBadge />
     </>
   );
 }

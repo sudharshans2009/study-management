@@ -108,10 +108,41 @@ export const studySession = pgTable("study_session", {
   subjectId: text("subject_id").references(() => subject.id, {
     onDelete: "set null",
   }),
-  durationMinutes: integer("duration_minutes").notNull(),
-  startedAt: timestamp("started_at").notNull(),
-  endedAt: timestamp("ended_at"),
+  
+  // Timer data (UTC timestamps)
+  startTime: timestamp("start_time", { mode: "date", withTimezone: true }).notNull(),
+  endTime: timestamp("end_time", { mode: "date", withTimezone: true }),
+  duration: integer("duration").notNull().default(0), // Duration in seconds
+  
+  // Session type and status
+  type: text("type", { enum: ["timer", "pomodoro", "stopwatch"] })
+    .notNull()
+    .default("timer"),
+  status: text("status", { enum: ["active", "paused", "completed", "cancelled"] })
+    .notNull()
+    .default("active"),
+  
+  // Resumption tracking
+  pausedAt: timestamp("paused_at", { mode: "date", withTimezone: true }), // When session was paused
+  lastResumedAt: timestamp("last_resumed_at", { mode: "date", withTimezone: true }), // Last resume time
+  canResume: boolean("can_resume").default(true), // Whether session can be resumed
+  autoCompleteReason: text("auto_complete_reason"), // Why it was auto-completed (e.g., "expired")
+  progressPercentage: integer("progress_percentage").default(0), // % completed when paused
+  remainingDuration: integer("remaining_duration"), // Seconds left when paused
+  
+  // Pomodoro specific
+  pomodoroCount: integer("pomodoro_count").default(0), // Number of completed pomodoros
+  isBreak: boolean("is_break").default(false), // Is this a break session?
+  
+  // Session metadata
   notes: text("notes"),
+  focusScore: integer("focus_score"), // 1-5 rating of focus quality
+  
+  // Legacy fields (for backward compatibility)
+  durationMinutes: integer("duration_minutes"), // Deprecated: use duration instead
+  startedAt: timestamp("started_at"), // Deprecated: use startTime instead
+  endedAt: timestamp("ended_at"), // Deprecated: use endTime instead
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
