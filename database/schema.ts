@@ -72,6 +72,9 @@ export const profile = pgTable("profile", {
     .notNull()
     .unique()
     .references(() => user.id, { onDelete: "cascade" }),
+  bio: text("bio"),
+  username: text("username").unique(),
+  socialLinks: text("social_links"), // JSON string array of social links
   dailyGoalMinutes: integer("daily_goal_minutes").default(120).notNull(),
   setupCompleted: boolean("setup_completed").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
