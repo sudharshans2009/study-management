@@ -150,23 +150,67 @@ export const studySession = pgTable("study_session", {
     .notNull(),
 });
 
-// Goal table
+// Goal table - Phase 1: Schema & Basic CRUD
 export const goal = pgTable("goal", {
   id: text("id").primaryKey(),
   userId: text("user_id")
     .notNull()
     .references(() => user.id, { onDelete: "cascade" }),
-  subjectId: text("subject_id").references(() => subject.id, {
-    onDelete: "set null",
-  }),
   title: text("title").notNull(),
   description: text("description"),
-  targetMinutes: integer("target_minutes"),
-  targetDate: timestamp("target_date"),
-  completed: boolean("completed").default(false).notNull(),
+  
+  // Goal type: study (overall) or subject (specific subject)
+  category: text("category", { enum: ["study", "subject"] }).notNull(),
+  
+  // Time period: daily, weekly, monthly
+  period: text("period", { enum: ["daily", "weekly", "monthly"] }).notNull(),
+  
+  // Unit of measurement: minutes or sessions
+  unit: text("unit", { enum: ["minutes", "sessions"] }).notNull(),
+  
+  // Target value (minutes or session count)
+  target: integer("target").notNull(),
+  
+  // Subject reference (required for subject goals, null for study goals)
+  subjectId: text("subject_id").references(() => subject.id, {
+    onDelete: "cascade",
+  }),
+  
+  // Status tracking
+  status: text("status", { enum: ["active", "completed", "archived"] })
+    .default("active")
+    .notNull(),
+  
+  // Time tracking
+  startAt: timestamp("start_at", { mode: "date", withTimezone: true }),
+  endAt: timestamp("end_at", { mode: "date", withTimezone: true }),
+  
+  // Last reset timestamp for recurring goals
+  lastResetAt: timestamp("last_reset_at", { mode: "date", withTimezone: true }),
+  
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
     .$onUpdate(() => /* @__PURE__ */ new Date())
     .notNull(),
+});
+
+// Goal progress table - tracks individual session contributions
+export const goalProgress = pgTable("goal_progress", {
+  id: text("id").primaryKey(),
+  goalId: text("goal_id")
+    .notNull()
+    .references(() => goal.id, { onDelete: "cascade" }),
+  sessionId: text("session_id").references(() => studySession.id, {
+    onDelete: "cascade",
+  }),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  
+  // Progress values
+  minutes: integer("minutes").default(0).notNull(),
+  count: integer("count").default(0).notNull(),
+  
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });

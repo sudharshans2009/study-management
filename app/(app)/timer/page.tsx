@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useTimer } from "@/hooks/use-timer";
 import { useSessionCleanup } from "@/hooks/use-session-cleanup";
 import { useSessionExpiryNotifications } from "@/hooks/use-session-expiry-notifications";
@@ -10,7 +10,7 @@ import { TimerControls } from "@/components/timer/timer-controls";
 import { TimerPresets } from "@/components/timer/timer-presets";
 import { SubjectSelector } from "@/components/timer/subject-selector";
 import { SessionSummaryModal } from "@/components/timer/session-summary-modal";
-import { SessionRecoveryModal } from "@/components/timer/session-recovery-modal";
+// import { SessionRecoveryModal } from "@/components/timer/session-recovery-modal";
 import { PomodoroTracker } from "@/components/timer/pomodoro-tracker";
 import { ResumableSessionAlert } from "@/components/timer/resumable-session-alert";
 import { Card } from "@/components/ui/card";
@@ -19,55 +19,59 @@ import type { TimerSession } from "@/actions/timer-actions";
 import { resumeTimerSession } from "@/actions/timer-actions";
 import { toast } from "sonner";
 
-// Import types and functions from use-timer
-interface PersistedTimerState {
-  sessionId: string;
-  timeLeft: number;
-  totalDuration: number;
-  state: "idle" | "running" | "paused" | "completed";
-  type: "timer" | "pomodoro" | "stopwatch";
-  isBreak: boolean;
-  pomodoroCount: number;
-  subjectId: string | null;
-  startedAt: number;
-  pausedAt: number | null;
-}
+// NOTE: SessionRecoveryModal is commented out because the useTimer hook
+// now handles recovery automatically on mount. If saved state exists,
+// the timer will resume automatically without showing a modal.
 
-// Helper function to load timer state from localStorage
-function loadTimerStateFromStorage(): PersistedTimerState | null {
-  try {
-    if (typeof window === "undefined") return null;
-    
-    const stored = localStorage.getItem("ss-study-timer-state");
-    if (!stored) return null;
-    
-    const state = JSON.parse(stored) as PersistedTimerState;
-    
-    // Validate state is not too old (max 24 hours)
-    const now = Date.now();
-    const age = now - state.startedAt;
-    if (age > 24 * 60 * 60 * 1000) {
-      console.log("Saved timer state is too old, clearing...");
-      localStorage.removeItem("ss-study-timer-state");
-      return null;
-    }
-    
-    return state;
-  } catch (error) {
-    console.error("Failed to load timer state:", error);
-    return null;
-  }
-}
+// Import types and functions from use-timer (currently unused but kept for reference)
+// interface PersistedTimerState {
+//   sessionId: string;
+//   timeLeft: number;
+//   totalDuration: number;
+//   state: "idle" | "running" | "paused" | "completed";
+//   type: "timer" | "pomodoro" | "stopwatch";
+//   isBreak: boolean;
+//   pomodoroCount: number;
+//   subjectId: string | null;
+//   startedAt: number;
+//   pausedAt: number | null;
+// }
 
-// Helper function to clear timer state from localStorage
-function clearTimerStateFromStorage(): void {
-  try {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem("ss-study-timer-state");
-  } catch (error) {
-    console.error("Failed to clear timer state:", error);
-  }
-}
+// Helper function to load timer state from localStorage (currently unused)
+// function loadTimerStateFromStorage(): PersistedTimerState | null {
+//   try {
+//     if (typeof window === "undefined") return null;
+//     
+//     const stored = localStorage.getItem("ss-study-timer-state");
+//     if (!stored) return null;
+//     
+//     const state = JSON.parse(stored) as PersistedTimerState;
+//     
+//     // Validate state is not too old (max 24 hours)
+//     const now = Date.now();
+//     const age = now - state.startedAt;
+//     if (age > 24 * 60 * 60 * 1000) {
+//       console.log("Saved timer state is too old, clearing...");
+//       localStorage.removeItem("ss-study-timer-state");
+//       return null;
+//     }
+//     
+//     return state;
+//   } catch (error) {
+//     console.error("Failed to load timer state:", error);
+//     return null;
+//   }
+// }
+
+// Helper function to clear timer state from localStorage (currently unused)
+// function clearTimerStateFromStorage(): void {
+//   try {
+//     if (typeof window === "undefined") return;
+//     localStorage.removeItem("ss-study-timer-state");
+//   } catch (error) {
+//     console.error("Failed to clear timer state:", error);
+//   }
+// }
 
 export default function TimerPage() {
   const [selectedSubject, setSelectedSubject] = useState<string | null>(null);
@@ -75,9 +79,9 @@ export default function TimerPage() {
   const [showSummary, setShowSummary] = useState(false);
   const [completedSession, setCompletedSession] = useState<TimerSession | null>(null);
   
-  // Session recovery modal state
-  const [showRecoveryModal, setShowRecoveryModal] = useState(false);
-  const [recoveredSession, setRecoveredSession] = useState<PersistedTimerState | null>(null);
+  // Session recovery modal state - DISABLED (timer hook handles recovery automatically)
+  // const [showRecoveryModal, setShowRecoveryModal] = useState(false);
+  // const [recoveredSession, setRecoveredSession] = useState<PersistedTimerState | null>(null);
 
   // Auto-cleanup expired paused sessions
   useSessionCleanup();
@@ -92,61 +96,40 @@ export default function TimerPage() {
     },
   });
 
-  // Check for saved timer state on mount (Phase 5.2)
-  useEffect(() => {
-    // Only check if timer is idle (not already running)
-    if (timer.state === "idle") {
-      const savedState = loadTimerStateFromStorage();
-      if (savedState) {
-        // Found a saved session - show recovery modal
-        setRecoveredSession(savedState);
-        setShowRecoveryModal(true);
-      }
-    }
-  }, [timer.state]);
-
+  // The timer hook now handles recovery automatically on mount
+  // We don't need the recovery modal anymore - it was causing reload loops
+  // If the timer state is already running/paused after mount, it recovered successfully
+  
   // Prevent navigation when timer is running (Phase 3.2)
   usePreventNavigation(
     timer.state === "running",
     "You have an active study timer. Leaving this page will pause it. Continue?"
   );
 
-  const handleRecoverSession = async () => {
-    if (!recoveredSession) return;
-    
-    try {
-      // Close the modal first
-      setShowRecoveryModal(false);
-      
-      // The timer hook will automatically load the saved state
-      // We just need to reload the page to reinitialize with the saved state
-      window.location.reload();
-      
-      toast.success("Session recovered successfully!");
-    } catch (error) {
-      console.error("Error recovering session:", error);
-      toast.error("Failed to recover session");
-      setShowRecoveryModal(true); // Show modal again on error
-    }
-  };
+  // Session recovery handlers - DISABLED (not needed anymore)
+  // const handleRecoverSession = async () => {
+  //   if (!recoveredSession) return;
+  //   try {
+  //     setShowRecoveryModal(false);
+  //     toast.success("Session recovered successfully!");
+  //   } catch (error) {
+  //     console.error("Error recovering session:", error);
+  //     toast.error("Failed to recover session");
+  //   }
+  // };
 
-  const handleDiscardSession = () => {
-    if (!recoveredSession) return;
-    
-    try {
-      // Clear the saved state
-      clearTimerStateFromStorage();
-      
-      // Close the modal
-      setShowRecoveryModal(false);
-      setRecoveredSession(null);
-      
-      toast.info("Saved session discarded");
-    } catch (error) {
-      console.error("Error discarding session:", error);
-      toast.error("Failed to discard session");
-    }
-  };
+  // const handleDiscardSession = () => {
+  //   if (!recoveredSession) return;
+  //   try {
+  //     clearTimerStateFromStorage();
+  //     setShowRecoveryModal(false);
+  //     setRecoveredSession(null);
+  //     toast.info("Saved session discarded");
+  //   } catch (error) {
+  //     console.error("Error discarding session:", error);
+  //     toast.error("Failed to discard session");
+  //   }
+  // };
 
   const handleStartTimer = (durationInSeconds: number) => {
     timer.start(durationInSeconds, selectedSubject || undefined, timerMode);
@@ -384,7 +367,7 @@ export default function TimerPage() {
         }}
       />
 
-      {/* Session Recovery Modal (Phase 5.2) */}
+      {/* Session Recovery Modal - DISABLED (timer hook handles recovery automatically)
       <SessionRecoveryModal
         open={showRecoveryModal}
         onOpenChange={setShowRecoveryModal}
@@ -392,6 +375,7 @@ export default function TimerPage() {
         onRecover={handleRecoverSession}
         onDiscard={handleDiscardSession}
       />
+      */}
     </div>
   );
 }

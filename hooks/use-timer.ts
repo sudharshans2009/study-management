@@ -463,6 +463,9 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
       setPomodoroCount(0);
       setIsBreak(false);
 
+      // Clear localStorage when session is deleted
+      clearTimerState();
+
       // Broadcast to other tabs
       broadcast({
         type: "TIMER_STOPPED",
@@ -515,6 +518,9 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
         setTotalDuration(0);
         setState("idle");
 
+        // Clear localStorage when session completes
+        clearTimerState();
+
         // Broadcast to other tabs
         broadcast({
           type: "TIMER_COMPLETED",
@@ -550,54 +556,64 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
           const remaining = Math.max(0, savedState.totalDuration - elapsed);
           
           if (remaining > 0) {
-            // Resume running timer
-            setTimeLeft(remaining);
-            setTotalDuration(savedState.totalDuration);
-            setState("running");
-            setPomodoroCount(savedState.pomodoroCount);
-            setIsBreak(savedState.isBreak);
-            startedAtRef.current = savedState.startedAt;
-            
-            // Try to load session from server
+            // Try to load session from server first
             try {
               const result = await getActiveSession();
               if (result.success && result.session && result.session.id === savedState.sessionId) {
+                // Server session exists - resume running timer
                 setSession(result.session);
+                setTimeLeft(remaining);
+                setTotalDuration(savedState.totalDuration);
+                setState("running");
+                setPomodoroCount(savedState.pomodoroCount);
+                setIsBreak(savedState.isBreak);
+                startedAtRef.current = savedState.startedAt;
+                
+                startCountdown();
+                startAutoSave();
+                toast.info("Resuming your study session...", {
+                  description: `${formatTime(remaining)} remaining`,
+                });
+              } else {
+                // Server session not found - clear localStorage
+                console.warn("Server session not found, clearing localStorage");
+                clearTimerState();
+                toast.error("Session expired or not found");
               }
             } catch (error) {
               console.error("Error loading session:", error);
+              clearTimerState();
             }
-            
-            startCountdown();
-            startAutoSave();
-            toast.info("Resuming your study session...", {
-              description: `${formatTime(remaining)} remaining`,
-            });
           } else {
             // Timer completed while tab was closed
             toast.info("Your timer completed while you were away");
             clearTimerState();
           }
         } else if (savedState.state === "paused" && savedState.pausedAt) {
-          // Restore paused state
-          setTimeLeft(savedState.timeLeft);
-          setTotalDuration(savedState.totalDuration);
-          setState("paused");
-          setPomodoroCount(savedState.pomodoroCount);
-          setIsBreak(savedState.isBreak);
-          startedAtRef.current = savedState.startedAt;
-          
-          // Try to load session from server
+          // Try to load session from server first
           try {
             const result = await getActiveSession();
             if (result.success && result.session && result.session.id === savedState.sessionId) {
+              // Server session exists - restore paused state
               setSession(result.session);
+              setTimeLeft(savedState.timeLeft);
+              setTotalDuration(savedState.totalDuration);
+              setState("paused");
+              setPomodoroCount(savedState.pomodoroCount);
+              setIsBreak(savedState.isBreak);
+              startedAtRef.current = savedState.startedAt;
+              
+              toast.info("Your paused session is ready to resume");
+            } else {
+              // Server session not found - clear localStorage
+              console.warn("Server session not found, clearing localStorage");
+              clearTimerState();
+              toast.error("Session expired or not found");
             }
           } catch (error) {
             console.error("Error loading session:", error);
+            clearTimerState();
           }
-          
-          toast.info("Your paused session is ready to resume");
         }
       } else {
         // No saved state, try loading from server (original behavior)
@@ -673,37 +689,54 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
   // Handle page close - warn and save state (Phase 3.1)
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (state === "running") {
+      if (state === "running" && session) {
         e.preventDefault();
         e.returnValue = ""; // Chrome requires returnValue to be set
         
-        // Save current state before unload
-        if (session) {
-          const timerState: PersistedTimerState = {
-            sessionId: session.id,
-            timeLeft,
-            totalDuration,
-            state,
-            type: session.type,
-            isBreak,
-            pomodoroCount,
-            subjectId: session.subjectId,
-            startedAt: startedAtRef.current || Date.now(),
-            pausedAt: null,
-          };
-          saveTimerState(timerState);
-        }
+        // Pause the countdown interval while the dialog is open
+        // This prevents the timer from continuing to count down in the background
+        clearIntervals();
+        
+        // Don't pause on the server - just warn the user
+        // If they actually reload, the state will be recovered on mount
+        // Pausing here causes issues if user cancels the reload
+        
+        // Save current state as RUNNING before unload
+        // On reload, the recovery logic will handle calculating elapsed time
+        const timerState: PersistedTimerState = {
+          sessionId: session.id,
+          timeLeft,
+          totalDuration,
+          state: "running", // Keep as running
+          type: session.type,
+          isBreak,
+          pomodoroCount,
+          subjectId: session.subjectId,
+          startedAt: startedAtRef.current || Date.now(),
+          pausedAt: null,
+        };
+        saveTimerState(timerState);
         
         return "You have an active study session. Are you sure you want to leave?";
       }
     };
 
+    // Resume countdown if user cancels navigation
+    const handleFocus = () => {
+      // If timer was running and intervals were cleared by beforeunload
+      if (state === "running" && session && !intervalRef.current) {
+        startCountdown();
+      }
+    };
+
     window.addEventListener("beforeunload", handleBeforeUnload);
+    window.addEventListener("focus", handleFocus);
 
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
+      window.removeEventListener("focus", handleFocus);
     };
-  }, [session, state, timeLeft, totalDuration, isBreak, pomodoroCount]);
+  }, [session, state, timeLeft, totalDuration, isBreak, pomodoroCount, clearIntervals, startCountdown]);
 
   // Update browser tab title with timer countdown (Phase 4.1)
   useEffect(() => {

@@ -103,9 +103,9 @@ export function SessionFiltersBar({ filters, onFiltersChange }: SessionFiltersBa
         )}
       </div>
 
-      {/* Date Range */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="space-y-2">
+      {/* Row 1: Time Period and Search Notes */}
+      <div className="grid grid-cols-4 gap-4">
+        <div className="space-y-2 col-span-1">
           <Label htmlFor="date-range">Time Period</Label>
           <Select
             value={filters.dateRange || "all"}
@@ -123,8 +123,7 @@ export function SessionFiltersBar({ filters, onFiltersChange }: SessionFiltersBa
           </Select>
         </div>
 
-        {/* Search */}
-        <div className="space-y-2 sm:col-span-2 lg:col-span-3">
+        <div className="space-y-2 col-span-3">
           <Label htmlFor="search">Search Notes</Label>
           <div className="flex gap-2">
             <Input
@@ -145,93 +144,98 @@ export function SessionFiltersBar({ filters, onFiltersChange }: SessionFiltersBa
         </div>
       </div>
 
-      {/* Subject Filters */}
-      {subjects.length > 0 && (
-        <div className="space-y-2">
-          <Label>Subjects</Label>
+      {/* Row 2: Subject, Type, Status, Score */}
+      <div className="grid grid-cols-4 gap-4">
+        {/* Subject Filters */}
+        <div className="space-y-2 col-span-1">
+          <Label>Subject</Label>
+          {subjects.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {subjects.map((subject) => (
+                <Badge
+                  key={subject.id}
+                  variant={
+                    filters.subjectIds?.includes(subject.id) ? "default" : "outline"
+                  }
+                  className="cursor-pointer hover:opacity-80"
+                  onClick={() => handleSubjectToggle(subject.id)}
+                  style={{
+                    backgroundColor: filters.subjectIds?.includes(subject.id)
+                      ? subject.color
+                      : undefined,
+                    borderColor: subject.color,
+                  }}
+                >
+                  {subject.name}
+                  {filters.subjectIds?.includes(subject.id) && (
+                    <X className="h-3 w-3 ml-1" />
+                  )}
+                </Badge>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">No subjects</p>
+          )}
+        </div>
+
+        {/* Type Filters */}
+        <div className="space-y-2 col-span-1">
+          <Label>Type</Label>
           <div className="flex flex-wrap gap-2">
-            {subjects.map((subject) => (
+            {(["timer", "pomodoro", "stopwatch"] as const).map((type) => (
               <Badge
-                key={subject.id}
-                variant={
-                  filters.subjectIds?.includes(subject.id) ? "default" : "outline"
-                }
+                key={type}
+                variant={filters.types?.includes(type) ? "default" : "outline"}
                 className="cursor-pointer hover:opacity-80"
-                onClick={() => handleSubjectToggle(subject.id)}
-                style={{
-                  backgroundColor: filters.subjectIds?.includes(subject.id)
-                    ? subject.color
-                    : undefined,
-                  borderColor: subject.color,
-                }}
+                onClick={() => handleTypeToggle(type)}
               >
-                {subject.name}
-                {filters.subjectIds?.includes(subject.id) && (
+                {type.charAt(0).toUpperCase() + type.slice(1)}
+                {filters.types?.includes(type) && (
                   <X className="h-3 w-3 ml-1" />
                 )}
               </Badge>
             ))}
           </div>
         </div>
-      )}
 
-      {/* Type Filters */}
-      <div className="space-y-2">
-        <Label>Session Type</Label>
-        <div className="flex flex-wrap gap-2">
-          {(["timer", "pomodoro", "stopwatch"] as const).map((type) => (
-            <Badge
-              key={type}
-              variant={filters.types?.includes(type) ? "default" : "outline"}
-              className="cursor-pointer hover:opacity-80"
-              onClick={() => handleTypeToggle(type)}
-            >
-              {type.charAt(0).toUpperCase() + type.slice(1)}
-              {filters.types?.includes(type) && (
-                <X className="h-3 w-3 ml-1" />
-              )}
-            </Badge>
-          ))}
+        {/* Status Filters */}
+        <div className="space-y-2 col-span-1">
+          <Label>Status</Label>
+          <div className="flex flex-wrap gap-2">
+            {(["completed", "cancelled"] as const).map((status) => (
+              <Badge
+                key={status}
+                variant={filters.statuses?.includes(status) ? "default" : "outline"}
+                className="cursor-pointer hover:opacity-80"
+                onClick={() => handleStatusToggle(status)}
+              >
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+                {filters.statuses?.includes(status) && (
+                  <X className="h-3 w-3 ml-1" />
+                )}
+              </Badge>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Status Filters */}
-      <div className="space-y-2">
-        <Label>Status</Label>
-        <div className="flex flex-wrap gap-2">
-          {(["completed", "cancelled"] as const).map((status) => (
-            <Badge
-              key={status}
-              variant={filters.statuses?.includes(status) ? "default" : "outline"}
-              className="cursor-pointer hover:opacity-80"
-              onClick={() => handleStatusToggle(status)}
-            >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
-              {filters.statuses?.includes(status) && (
-                <X className="h-3 w-3 ml-1" />
-              )}
-            </Badge>
-          ))}
-        </div>
-      </div>
-
-      {/* Focus Score Filters */}
-      <div className="space-y-2">
-        <Label>Focus Score</Label>
-        <div className="flex flex-wrap gap-2">
-          {[1, 2, 3, 4, 5].map((score) => (
-            <Badge
-              key={score}
-              variant={filters.focusScores?.includes(score) ? "default" : "outline"}
-              className="cursor-pointer hover:opacity-80"
-              onClick={() => handleFocusScoreToggle(score)}
-            >
-              {score} ★
-              {filters.focusScores?.includes(score) && (
-                <X className="h-3 w-3 ml-1" />
-              )}
-            </Badge>
-          ))}
+        {/* Focus Score Filters */}
+        <div className="space-y-2 col-span-1">
+          <Label>Score</Label>
+          <div className="flex flex-wrap gap-2">
+            {[1, 2, 3, 4, 5].map((score) => (
+              <Badge
+                key={score}
+                variant={filters.focusScores?.includes(score) ? "default" : "outline"}
+                className="cursor-pointer hover:opacity-80"
+                onClick={() => handleFocusScoreToggle(score)}
+              >
+                {score} ★
+                {filters.focusScores?.includes(score) && (
+                  <X className="h-3 w-3 ml-1" />
+                )}
+              </Badge>
+            ))}
+          </div>
         </div>
       </div>
     </Card>
