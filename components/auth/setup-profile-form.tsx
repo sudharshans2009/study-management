@@ -61,9 +61,12 @@ export function SetupProfileForm() {
       }
       return result;
     },
-    onSuccess: () => {
-      // Invalidate session to refetch with updated profile
-      queryClient.invalidateQueries({ queryKey: ["session"] });
+    onSuccess: async () => {
+      // Invalidate session to refetch with updated onboarding status
+      await queryClient.invalidateQueries({ queryKey: ["session"] });
+      
+      console.log("✅ Setup completed, redirecting to dashboard...");
+      
       // Redirect to dashboard
       router.push("/dashboard");
       router.refresh();
@@ -85,6 +88,8 @@ export function SetupProfileForm() {
       fieldsToValidate = ["fullName"];
     } else if (currentStep === 2) {
       fieldsToValidate = ["subjects"];
+    } else if (currentStep === 3) {
+      fieldsToValidate = ["dailyGoal"];
     }
 
     const isValid = await form.trigger(fieldsToValidate);
@@ -108,29 +113,37 @@ export function SetupProfileForm() {
 
         {/* Progress Indicator */}
         <div className="flex justify-between mb-8">
-          {[1, 2, 3].map((step) => (
+          {[1, 2, 3, 4].map((step) => (
             <div
               key={step}
-              className={`flex items-center ${step < 3 ? "flex-1" : ""}`}
+              className={`flex items-center ${step < 4 ? "flex-1" : ""}`}
             >
               <div
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all ${
                   currentStep >= step
-                    ? "bg-primary text-primary-foreground"
+                    ? "bg-primary text-primary-foreground shadow-sm"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
                 {step}
               </div>
-              {step < 3 && (
+              {step < 4 && (
                 <div
-                  className={`flex-1 h-1 mx-2 ${
+                  className={`flex-1 h-1 mx-2 transition-all ${
                     currentStep > step ? "bg-primary" : "bg-muted"
                   }`}
                 />
               )}
             </div>
           ))}
+        </div>
+
+        {/* Step Labels */}
+        <div className="flex justify-between mb-6 text-xs text-muted-foreground">
+          <span className={currentStep === 1 ? "text-foreground font-medium" : ""}>Name</span>
+          <span className={currentStep === 2 ? "text-foreground font-medium" : ""}>Subjects</span>
+          <span className={currentStep === 3 ? "text-foreground font-medium" : ""}>Time</span>
+          <span className={currentStep === 4 ? "text-foreground font-medium" : ""}>Summary</span>
         </div>
 
         {/* Step 1: Personal Info */}
@@ -151,6 +164,7 @@ export function SetupProfileForm() {
                       <Input
                         placeholder="John Doe"
                         disabled={setupMutation.isPending}
+                        autoFocus
                         {...field}
                       />
                     </FormControl>
@@ -214,7 +228,9 @@ export function SetupProfileForm() {
                                 }`}
                                 style={{ backgroundColor: color }}
                                 onClick={() => field.onChange(color)}
-                              />
+                              >
+                                <p className="sr-only">{color}</p>
+                              </button>
                             ))}
                           </div>
                         </FormControl>
@@ -271,7 +287,8 @@ export function SetupProfileForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>
-                      Daily Goal (minutes): {field.value}
+                      Daily Goal: {Math.floor(field.value / 60)}h{" "}
+                      {field.value % 60 > 0 ? `${field.value % 60}m` : ""}
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -287,14 +304,62 @@ export function SetupProfileForm() {
                       />
                     </FormControl>
                     <FormDescription>
-                      {Math.floor(field.value / 60)}h{" "}
-                      {field.value % 60 > 0 ? `${field.value % 60}m` : ""} per
-                      day
+                      Recommended: 2-4 hours per day for optimal learning
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step 4: Summary */}
+        {currentStep === 4 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Review Your Profile</CardTitle>
+              <CardDescription>
+                Make sure everything looks good before finishing
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Full Name</h3>
+                <p className="text-lg font-medium">{form.getValues("fullName")}</p>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Study Subjects</h3>
+                <div className="flex flex-wrap gap-2">
+                  {form.getValues("subjects").map((subject, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-card"
+                    >
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: subject.color }}
+                      />
+                      <span className="text-sm font-medium">{subject.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <h3 className="text-sm font-medium text-muted-foreground mb-2">Daily Study Goal</h3>
+                <p className="text-lg font-medium">
+                  {Math.floor(form.getValues("dailyGoal") / 60)}h{" "}
+                  {form.getValues("dailyGoal") % 60 > 0 ? `${form.getValues("dailyGoal") % 60}m` : ""} per day
+                </p>
+              </div>
+
+              <Alert>
+                <AlertDescription>
+                  You can update these settings anytime from your profile page.
+                </AlertDescription>
+              </Alert>
             </CardContent>
           </Card>
         )}
@@ -312,7 +377,7 @@ export function SetupProfileForm() {
             </Button>
           )}
 
-          {currentStep < 3 ? (
+          {currentStep < 4 ? (
             <Button
               type="button"
               onClick={nextStep}

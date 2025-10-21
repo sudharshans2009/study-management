@@ -10,21 +10,23 @@ import {
 import { NavigationLinks } from "./navigation-links";
 import { Logo } from "./logo";
 import { UserMenu } from "./user-menu-client";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export function Navbar() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
-      <div className="container flex h-16 items-center justify-between px-4">
+    <header className="sticky flex justify-center top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md supports-backdrop-filter:bg-background/60">
+      <div className="container flex h-16 items-center justify-between px-4 md:px-6">
         {/* Left: Logo/App Name */}
         <Logo />
 
         {/* Center: Desktop Navigation */}
-        <nav className="hidden md:flex items-center space-x-6 flex-1 justify-center">
+        <nav className="hidden md:flex items-center space-x-8 flex-1 justify-center">
           <NavigationLinks />
         </nav>
 
         {/* Right: User Menu & Mobile Menu */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
           <UserMenu />
           
           {/* Mobile Menu */}

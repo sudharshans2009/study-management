@@ -6,12 +6,12 @@ import { UserMenu } from "./user-menu-client";
 
 export function HomeNavbar() {
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="sticky flex justify-center top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
         {/* Logo */}
         <Link href="/" className="flex items-center space-x-2">
           <Timer className="h-6 w-6 text-primary" />
-          <span className="font-bold text-xl">StudyFlow</span>
+          <span className="font-bold text-xl">SS.Study</span>
         </Link>
 
         {/* User Menu or Auth Buttons */}

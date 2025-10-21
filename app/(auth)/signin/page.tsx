@@ -7,11 +7,11 @@ import Link from "next/link";
 export default function SignInPage() {
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="p-4">
+      <div className="container mx-auto p-4">
         <BackToHomeButton />
       </div>
       
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-1">
         <AuthLayout
           title="Welcome back"
           description="Sign in to your account to continue"

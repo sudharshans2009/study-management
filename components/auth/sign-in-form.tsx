@@ -48,9 +48,27 @@ export function SignInForm() {
         setIsLoading(false);
         return;
       }
+
+      // Get user data and check email verification and onboarding status
+      const user = result.data?.user;
+      if (user) {
+        // Check email verification first (using emailVerified property)
+        if (!(user as { emailVerified?: boolean }).emailVerified) {
+          router.push("/verify-email");
+        } 
+        // Then check onboarding completion (using onboardingStatus property)
+        else if ((user as { onboardingStatus?: string }).onboardingStatus !== "completed") {
+          router.push("/setup");
+        } 
+        // Fully verified and onboarded
+        else {
+          router.push("/dashboard");
+        }
+      } else {
+        // Fallback if user data not available
+        router.push("/dashboard");
+      }
       
-      // Success - redirect to dashboard
-      router.push("/dashboard");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to sign in");

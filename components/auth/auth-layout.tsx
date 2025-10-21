@@ -28,16 +28,16 @@ interface AuthLayoutProps {
 
 export function AuthLayout({ children, title, description, footer }: AuthLayoutProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center">
+    <div className="container mx-auto flex items-center justify-center min-h-screen p-4">
+      <div className="w-full md:max-w-[50%] lg:max-w-[33.333%] space-y-8">
+        <div className="text-center space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
           {description && (
-            <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+            <p className="text-sm text-muted-foreground">{description}</p>
           )}
         </div>
 
-        <div className="bg-card border rounded-lg p-6 space-y-6">
+        <div className="bg-card border rounded-lg shadow-sm p-8 space-y-6">
           {children}
         </div>
 
@@ -46,7 +46,7 @@ export function AuthLayout({ children, title, description, footer }: AuthLayoutP
             {footer.text}{" "}
             <Link
               href={footer.linkHref}
-              className="font-semibold text-primary hover:underline"
+              className="font-semibold text-primary hover:underline transition-colors"
             >
               {footer.linkText}
             </Link>

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "StudyFlow",
+  title: "SS.Study",
   description: "Track your study sessions, compete with friends, and unlock achievements.",
 };
 

@@ -22,7 +22,7 @@ export async function sendVerificationEmail(
   try {
     console.log(`📧 Sending verification email to: ${to}`);
     const { data, error } = await resend.emails.send({
-      from: "Assist <sudharshans2009@gmail.com>", // Using verified email for testing
+      from: "SS.Study <contact@sudharshans2009.live>", // Using verified email for testing
       to: [to],
       subject: "Verify your email address",
       html: `
@@ -35,7 +35,7 @@ export async function sendVerificationEmail(
           </head>
           <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(to right, #4f46e5, #7c3aed); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Assist!</h1>
+              <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to SS.Study!</h1>
             </div>
             
             <div style="background: #ffffff; padding: 40px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
@@ -64,7 +64,7 @@ export async function sendVerificationEmail(
             </div>
             
             <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-              <p>© ${new Date().getFullYear()} Assist. All rights reserved.</p>
+              <p>© ${new Date().getFullYear()} SS.Study. All rights reserved.</p>
             </div>
           </body>
         </html>
@@ -103,7 +103,7 @@ export async function sendPasswordResetEmail(
   try {
     console.log(`📧 Sending password reset email to: ${to}`);
     const { data, error } = await resend.emails.send({
-      from: "Assist <sudharshans2009@gmail.com>", // Using verified email for testing
+      from: "SS.Study <sudharshans2009@gmail.com>", // Using verified email for testing
       to: [to],
       subject: "Reset your password",
       html: `
@@ -123,7 +123,7 @@ export async function sendPasswordResetEmail(
               <p style="font-size: 16px; margin-bottom: 20px;">Hi ${name},</p>
               
               <p style="font-size: 16px; margin-bottom: 20px;">
-                We received a request to reset your password for your Assist account.
+                We received a request to reset your password for your SS.Study account.
               </p>
               
               <div style="text-align: center; margin: 40px 0;">
@@ -149,7 +149,7 @@ export async function sendPasswordResetEmail(
             </div>
             
             <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-              <p>© ${new Date().getFullYear()} Assist. All rights reserved.</p>
+              <p>© ${new Date().getFullYear()} SS.Study. All rights reserved.</p>
             </div>
           </body>
         </html>
@@ -188,31 +188,31 @@ export async function sendWelcomeEmail(
   try {
     console.log(`📧 Sending welcome email to: ${to}`);
     const { data, error } = await resend.emails.send({
-      from: "Assist <sudharshans2009@gmail.com>", // Using verified email for testing
+      from: "SS.Study <sudharshans2009@gmail.com>", // Using verified email for testing
       to: [to],
-      subject: "Welcome to Assist!",
+      subject: "Welcome to SS.Study!",
       html: `
         <!DOCTYPE html>
         <html>
           <head>
             <meta charset="utf-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Welcome to Assist</title>
+            <title>Welcome to SS.Study</title>
           </head>
           <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
             <div style="background: linear-gradient(to right, #4f46e5, #7c3aed); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Welcome to Assist!</h1>
+              <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Welcome to SS.Study!</h1>
             </div>
             
             <div style="background: #ffffff; padding: 40px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
               <p style="font-size: 16px; margin-bottom: 20px;">Hi ${name},</p>
               
               <p style="font-size: 16px; margin-bottom: 20px;">
-                Welcome aboard! We're thrilled to have you join the Assist community.
+                Welcome aboard! We're thrilled to have you join the SS.Study community.
               </p>
               
               <p style="font-size: 16px; margin-bottom: 20px;">
-                Here's what you can do with Assist:
+                Here's what you can do with SS.Study:
               </p>
               
               <ul style="font-size: 16px; margin-bottom: 30px; padding-left: 20px;">
@@ -238,7 +238,7 @@ export async function sendWelcomeEmail(
             </div>
             
             <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-              <p>© ${new Date().getFullYear()} Assist. All rights reserved.</p>
+              <p>© ${new Date().getFullYear()} SS.Study. All rights reserved.</p>
             </div>
           </body>
         </html>
@@ -278,9 +278,9 @@ export async function sendGoalReminderEmail(
   try {
     console.log(`📧 Sending goal reminder email to: ${userEmail}`);
     const { data, error } = await resend.emails.send({
-      from: "Assist <sudharshans2009@gmail.com>",
+      from: "SS.Study <sudharshans2009@gmail.com>",
       to: [userEmail],
-      subject: "Goal Reminder - Assist",
+      subject: "Goal Reminder - SS.Study",
       html: `
         <h1>Hi ${userName}!</h1>
         <p>This is a reminder about your goal: <strong>${goalName}</strong></p>
@@ -312,9 +312,9 @@ export async function sendStreakReminderEmail(
   try {
     console.log(`📧 Sending streak reminder email to: ${userEmail}`);
     const { data, error } = await resend.emails.send({
-      from: "Assist <sudharshans2009@gmail.com>",
+      from: "SS.Study <sudharshans2009@gmail.com>",
       to: [userEmail],
-      subject: "Don't Break Your Streak! - Assist",
+      subject: "Don't Break Your Streak! - SS.Study",
       html: `
         <h1>Hi ${userName}!</h1>
         <p>You have a ${streakDays}-day streak going! Don't break it today.</p>

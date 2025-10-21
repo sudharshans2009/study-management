@@ -2,7 +2,7 @@
 
 import { setupProfileSchema } from "@/lib/validations/auth";
 import { getDb } from "@/database/drizzle";
-import { profile, subject } from "@/database/schema";
+import { profile, subject, user } from "@/database/schema";
 import { getSessionAction } from "./auth-actions";
 import { nanoid } from "nanoid";
 import { eq } from "drizzle-orm";
@@ -68,6 +68,17 @@ export async function setupProfileAction(data: unknown) {
 
       await db.insert(subject).values(subjectsToInsert);
     }
+
+    // Mark onboarding as completed
+    await db
+      .update(user)
+      .set({
+        onboardingStatus: "completed",
+        updatedAt: new Date(),
+      })
+      .where(eq(user.id, userId));
+
+    console.log(`🎉 Onboarding completed for user ${userId}`);
 
     return {
       success: true,

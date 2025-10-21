@@ -6,12 +6,12 @@ export function CTASection() {
   return (
     <section className="py-20">
       <div className="container px-4">
-        <div className="mx-auto max-w-3xl text-center rounded-2xl bg-linear-to-r from-primary/10 via-purple-500/10 to-primary/10 p-12 border-2">
+        <div className="mx-auto max-w-3xl text-center rounded-2xl bg-primary/10 p-12 border-2">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
             Ready to Transform Your Study Habits?
           </h2>
           <p className="text-lg text-muted-foreground mb-8">
-            Join thousands of students who are already achieving their goals with StudyFlow.
+            Join thousands of students who are already achieving their goals with SS.Study.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button size="lg" asChild>

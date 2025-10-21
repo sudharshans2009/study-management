@@ -54,13 +54,12 @@ export function SignUpForm() {
         return;
       }
       
-      setSuccess("Account created successfully! Redirecting to setup...");
+      setSuccess("Account created! Please check your email to verify your account.");
       
-      // Redirect to setup page after a short delay
+      // Redirect to verify-email page after a short delay
       setTimeout(() => {
-        router.push("/setup");
-        router.refresh();
-      }, 1500);
+        router.push("/verify-email");
+      }, 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to create account");
       setIsLoading(false);

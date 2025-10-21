@@ -57,15 +57,16 @@ export function NavigationLinks({ mobile = false }: NavigationLinksProps) {
       <>
         {routes.map((route) => {
           const Icon = route.icon;
+          const isActive = pathname === route.href;
           return (
             <Link
               key={route.href}
               href={route.href}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors hover:bg-accent hover:text-accent-foreground",
-                pathname === route.href
-                  ? "bg-accent text-accent-foreground"
-                  : "text-muted-foreground"
+                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all",
+                isActive
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
               )}
             >
               <Icon className="h-5 w-5" />
@@ -79,20 +80,23 @@ export function NavigationLinks({ mobile = false }: NavigationLinksProps) {
 
   return (
     <>
-      {routes.map((route) => (
-        <Link
-          key={route.href}
-          href={route.href}
-          className={cn(
-            "text-sm font-medium transition-colors hover:text-primary",
-            pathname === route.href
-              ? "text-foreground"
-              : "text-muted-foreground"
-          )}
-        >
-          {route.label}
-        </Link>
-      ))}
+      {routes.map((route) => {
+        const isActive = pathname === route.href;
+        return (
+          <Link
+            key={route.href}
+            href={route.href}
+            className={cn(
+              "text-sm font-medium transition-all relative px-1 py-1.5",
+              isActive
+                ? "text-foreground after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:bg-primary after:rounded-full"
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {route.label}
+          </Link>
+        );
+      })}
     </>
   );
 }

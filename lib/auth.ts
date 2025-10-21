@@ -8,6 +8,7 @@ import {
   sendVerificationEmail,
   sendPasswordResetEmail,
 } from "@/services/email";
+import { eq } from "drizzle-orm";
 
 export const auth = betterAuth({
   baseURL: config.env.url,
@@ -40,7 +41,7 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendOnSignUp: true, // Send verification email on signup
-    autoSignInAfterVerification: true,
+    autoSignInAfterVerification: false, // Don't auto-login - redirect to setup instead
     async sendVerificationEmail(data, _request) {
       console.log("📧 Attempting to send verification email to:", data.user.email);
       
@@ -58,6 +59,25 @@ export const auth = betterAuth({
       }
 
       console.log("✅ Verification email sent successfully to:", data.user.email);
+    },
+    async onVerificationSuccess(user: { id: string; email: string; name: string }) {
+      // Update user's onboarding status to pending_setup after successful verification
+      console.log(`✅ Email verified for user ${user.id}, updating onboarding status to pending_setup`);
+      
+      try {
+        await db
+          .update(schema.user)
+          .set({
+            emailVerified: true,
+            onboardingStatus: "pending_setup",
+            updatedAt: new Date(),
+          })
+          .where(eq(schema.user.id, user.id));
+        
+        console.log(`✅ Onboarding status updated to pending_setup`);
+      } catch (error) {
+        console.error("❌ Failed to update onboarding status:", error);
+      }
     },
   },
   database: drizzleAdapter(db, {
@@ -83,9 +103,10 @@ export const auth = betterAuth({
   },
   user: {
     additionalFields: {
-      fullName: {
+      onboardingStatus: {
         type: "string",
-        required: false,
+        required: true,
+        defaultValue: "pending_verification",
       },
     },
   },

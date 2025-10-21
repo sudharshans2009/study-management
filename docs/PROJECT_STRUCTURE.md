@@ -1,4 +1,4 @@
-# Project Structure - StudyFlow
+# Project Structure - SS.Study
 
 ## Directory Organization
 

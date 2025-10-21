@@ -23,13 +23,13 @@ const footerLinks = {
   social: [
     { icon: Github, href: "https://github.com", label: "GitHub" },
     { icon: Twitter, href: "https://twitter.com", label: "Twitter" },
-    { icon: Mail, href: "mailto:hello@studyflow.com", label: "Email" },
+    { icon: Mail, href: "mailto:hello@sudharshans.me", label: "Email" },
   ],
 };
 
 export function Footer() {
   return (
-    <footer className="border-t bg-background">
+    <footer className="border-t flex justify-center bg-background">
       <div className="container px-4 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
           <div className="col-span-2 md:col-span-1">
@@ -90,7 +90,7 @@ export function Footer() {
         
         <div className="border-t pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} StudyFlow. All rights reserved.
+            © {new Date().getFullYear()} SS.Study. All rights reserved.
           </p>
           
           <div className="flex items-center gap-4">

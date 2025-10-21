@@ -235,7 +235,7 @@ Landing Page (/)
 **Home Navbar:**
 ```
 ┌──────────────────────────────────────────┐
-│ [Logo StudyFlow]      [Sign In][Sign Up] │
+│ [Logo SS.Study]      [Sign In][Sign Up] │
 └──────────────────────────────────────────┘
 ```
 

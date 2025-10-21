@@ -1,4 +1,4 @@
-# StudyFlow - Study & Productivity App
+# SS.Study - Study & Productivity App
 
 A modern study tracking and productivity application built with Next.js 15, Better Auth, Drizzle ORM, and shadcn/ui.
 
@@ -226,4 +226,4 @@ MIT License - see LICENSE file for details
 
 ## Support
 
-For support, email support@studyflow.app or open an issue on GitHub.
+For support, email support@sudharshans.me or open an issue on GitHub.

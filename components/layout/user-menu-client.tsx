@@ -46,6 +46,10 @@ export function UserMenu() {
     );
   }
 
+  if (!user) {
+    return null;
+  }
+
   // Show user menu for authenticated users
   return (
     <DropdownMenu>
