@@ -2,10 +2,10 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /**
- * Simplified middleware - only handles redirecting logged-in users away from auth pages
+ * Simplified proxy - only handles redirecting logged-in users away from auth pages
  * Individual route components handle their own authentication and verification checks
  */
-export async function middleware(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Allow all API routes

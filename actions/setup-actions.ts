@@ -69,11 +69,12 @@ export async function setupProfileAction(data: unknown) {
       await db.insert(subject).values(subjectsToInsert);
     }
 
-    // Mark onboarding as completed
+    // Mark onboarding as completed and set timezone
     await db
       .update(user)
       .set({
         onboardingStatus: "completed",
+        timezone: validatedData.timezone || "Asia/Kolkata",
         updatedAt: new Date(),
       })
       .where(eq(user.id, userId));

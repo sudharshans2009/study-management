@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { SessionFilters } from "@/actions/session-actions";
 import { getUserSubjects } from "@/actions/timer-actions";
 import {
@@ -16,6 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { X, Search } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { getSubjectColorClasses } from "@/lib/subject-colors";
+import { cn } from "@/lib/utils";
 
 interface SessionFiltersBarProps {
   filters: SessionFilters;
@@ -23,18 +26,19 @@ interface SessionFiltersBarProps {
 }
 
 export function SessionFiltersBar({ filters, onFiltersChange }: SessionFiltersBarProps) {
-  const [subjects, setSubjects] = useState<Array<{ id: string; name: string; color: string }>>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    const loadSubjects = async () => {
+  // Fetch subjects with React Query
+  const { data: subjects = [] } = useQuery({
+    queryKey: ["subjects"],
+    queryFn: async () => {
       const result = await getUserSubjects();
-      if (result.success && result.subjects) {
-        setSubjects(result.subjects);
+      if (!result.success || !result.subjects) {
+        return [];
       }
-    };
-    loadSubjects();
-  }, []);
+      return result.subjects;
+    },
+  });
 
   const handleSubjectToggle = (subjectId: string) => {
     const current = filters.subjectIds || [];
@@ -151,27 +155,25 @@ export function SessionFiltersBar({ filters, onFiltersChange }: SessionFiltersBa
           <Label>Subject</Label>
           {subjects.length > 0 ? (
             <div className="flex flex-wrap gap-2">
-              {subjects.map((subject) => (
-                <Badge
-                  key={subject.id}
-                  variant={
-                    filters.subjectIds?.includes(subject.id) ? "default" : "outline"
-                  }
-                  className="cursor-pointer hover:opacity-80"
-                  onClick={() => handleSubjectToggle(subject.id)}
-                  style={{
-                    backgroundColor: filters.subjectIds?.includes(subject.id)
-                      ? subject.color
-                      : undefined,
-                    borderColor: subject.color,
-                  }}
-                >
-                  {subject.name}
-                  {filters.subjectIds?.includes(subject.id) && (
-                    <X className="h-3 w-3 ml-1" />
-                  )}
-                </Badge>
-              ))}
+              {subjects.map((subject) => {
+                const colorClasses = getSubjectColorClasses(subject.color);
+                const isSelected = filters.subjectIds?.includes(subject.id);
+                return (
+                  <Badge
+                    key={subject.id}
+                    variant={isSelected ? "default" : "outline"}
+                    className={cn(
+                      "cursor-pointer hover:opacity-80",
+                      isSelected ? colorClasses.bg : "",
+                      colorClasses.border
+                    )}
+                    onClick={() => handleSubjectToggle(subject.id)}
+                  >
+                    {subject.name}
+                    {isSelected && <X className="h-3 w-3 ml-1" />}
+                  </Badge>
+                );
+              })}
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">No subjects</p>

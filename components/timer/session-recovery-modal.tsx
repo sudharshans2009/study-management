@@ -155,12 +155,12 @@ export function SessionRecoveryModal({
               <div className="h-2 bg-muted-foreground/20 rounded-full overflow-hidden">
                 <div
                   className={cn(
-                    "h-full transition-all",
+                    "h-full transition-all progress-bar-dynamic",
                     session.type === "pomodoro" && "bg-red-500",
                     session.type === "timer" && "bg-blue-500",
                     session.type === "stopwatch" && "bg-purple-500"
                   )}
-                  style={{ width: `${Math.min(100, Math.max(0, getProgress()))}%` }}
+                  style={{ "--progress-width": `${Math.min(100, Math.max(0, getProgress()))}%` } as React.CSSProperties}
                 />
               </div>
             </div>

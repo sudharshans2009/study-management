@@ -159,3 +159,153 @@
     }
   }
 }
+
+@layer utilities {
+  .progress-bar-dynamic {
+    width: var(--progress-width, 0%);
+  }
+
+  .subject-color-blue-bg {
+    background-color: #3B82F6;
+  }
+
+  .subject-color-blue-border {
+    border-color: #3B82F6;
+  }
+
+  .subject-color-blue-soft-bg {
+    background-color: #3B82F620;
+  }
+
+  .subject-color-blue-text {
+    color: #3B82F6;
+  }
+
+  .subject-color-red-bg {
+    background-color: #EF4444;
+  }
+
+  .subject-color-red-border {
+    border-color: #EF4444;
+  }
+
+  .subject-color-red-soft-bg {
+    background-color: #EF444420;
+  }
+
+  .subject-color-red-text {
+    color: #EF4444;
+  }
+
+  .subject-color-green-bg {
+    background-color: #10B981;
+  }
+
+  .subject-color-green-border {
+    border-color: #10B981;
+  }
+
+  .subject-color-green-soft-bg {
+    background-color: #10B98120;
+  }
+
+  .subject-color-green-text {
+    color: #10B981;
+  }
+
+  .subject-color-amber-bg {
+    background-color: #F59E0B;
+  }
+
+  .subject-color-amber-border {
+    border-color: #F59E0B;
+  }
+
+  .subject-color-amber-soft-bg {
+    background-color: #F59E0B20;
+  }
+
+  .subject-color-amber-text {
+    color: #F59E0B;
+  }
+
+  .subject-color-violet-bg {
+    background-color: #8B5CF6;
+  }
+
+  .subject-color-violet-border {
+    border-color: #8B5CF6;
+  }
+
+  .subject-color-violet-soft-bg {
+    background-color: #8B5CF620;
+  }
+
+  .subject-color-violet-text {
+    color: #8B5CF6;
+  }
+
+  .subject-color-pink-bg {
+    background-color: #EC4899;
+  }
+
+  .subject-color-pink-border {
+    border-color: #EC4899;
+  }
+
+  .subject-color-pink-soft-bg {
+    background-color: #EC489920;
+  }
+
+  .subject-color-pink-text {
+    color: #EC4899;
+  }
+
+  .subject-color-cyan-bg {
+    background-color: #06B6D4;
+  }
+
+  .subject-color-cyan-border {
+    border-color: #06B6D4;
+  }
+
+  .subject-color-cyan-soft-bg {
+    background-color: #06B6D420;
+  }
+
+  .subject-color-cyan-text {
+    color: #06B6D4;
+  }
+
+  .subject-color-orange-bg {
+    background-color: #F97316;
+  }
+
+  .subject-color-orange-border {
+    border-color: #F97316;
+  }
+
+  .subject-color-orange-soft-bg {
+    background-color: #F9731620;
+  }
+
+  .subject-color-orange-text {
+    color: #F97316;
+  }
+
+  .subject-color-default-bg {
+    background-color: transparent;
+  }
+
+  .subject-color-default-border {
+    border-color: transparent;
+  }
+
+  .subject-color-default-soft-bg {
+    background-color: transparent;
+  }
+
+  .subject-color-default-text {
+    color: inherit;
+  }
+}

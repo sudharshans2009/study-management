@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -21,25 +21,19 @@ export function SubjectSelector({
   selectedSubject,
   onSubjectChange,
 }: SubjectSelectorProps) {
-  const [subjects, setSubjects] = useState<Array<{ id: string; name: string }>>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    const loadSubjects = async () => {
-      try {
-        const result = await getUserSubjects();
-        if (result.success && result.subjects) {
-          setSubjects(result.subjects);
-        }
-      } catch (error) {
-        console.error("Error loading subjects:", error);
-      } finally {
-        setIsLoading(false);
+  const {
+    data: subjects = [],
+    isLoading,
+  } = useQuery({
+    queryKey: ["subjects"],
+    queryFn: async () => {
+      const result = await getUserSubjects();
+      if (!result.success || !result.subjects) {
+        return [];
       }
-    };
-
-    loadSubjects();
-  }, []);
+      return result.subjects;
+    },
+  });
 
   if (isLoading) {
     return (

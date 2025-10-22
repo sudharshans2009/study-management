@@ -3,9 +3,10 @@
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/database/drizzle";
-import { profile as profileTable, subject as subjectTable } from "@/database/schema";
+import { profile as profileTable, subject as subjectTable, user as userTable } from "@/database/schema";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
+import { isValidTimezone } from "@/lib/timezone-utils";
 
 export type SettingsResult = {
   success: boolean;
@@ -230,6 +231,78 @@ export async function getDailyGoal() {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to get daily goal",
+    };
+  }
+}
+
+/**
+ * Update user's timezone preference
+ */
+export async function updateUserTimezone(
+  timezone: string
+): Promise<SettingsResult> {
+  try {
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
+
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // Validate timezone
+    if (!isValidTimezone(timezone)) {
+      return { success: false, error: "Invalid timezone" };
+    }
+
+    await db
+      .update(userTable)
+      .set({
+        timezone,
+        updatedAt: new Date(),
+      })
+      .where(eq(userTable.id, session.user.id));
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error updating timezone:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to update timezone",
+    };
+  }
+}
+
+/**
+ * Get user's timezone
+ */
+export async function getUserTimezone() {
+  try {
+    const headersList = await headers();
+    const session = await auth.api.getSession({
+      headers: headersList,
+    });
+
+    if (!session?.user) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const users = await db
+      .select({ timezone: userTable.timezone })
+      .from(userTable)
+      .where(eq(userTable.id, session.user.id))
+      .limit(1);
+
+    return {
+      success: true,
+      data: users.length > 0 ? users[0].timezone : "Asia/Kolkata",
+    };
+  } catch (error) {
+    console.error("Error getting timezone:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to get timezone",
     };
   }
 }

@@ -29,6 +29,7 @@ import { Clock, Star, Timer, Trash2, Play, MoreVertical, Edit, X, Loader2 } from
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { EditSessionDialog } from "./edit-session-dialog";
+import { getSubjectColorClasses } from "@/lib/subject-colors";
 
 interface SessionCardProps {
   session: SessionWithSubject;
@@ -158,11 +159,11 @@ export function SessionCard({ session, onDelete }: SessionCardProps) {
               {session.subject && (
                 <Badge
                   variant="outline"
-                  style={{
-                    backgroundColor: `${session.subject.color}20`,
-                    borderColor: session.subject.color,
-                    color: session.subject.color,
-                  }}
+                  className={cn(
+                    getSubjectColorClasses(session.subject.color).softBg,
+                    getSubjectColorClasses(session.subject.color).border,
+                    getSubjectColorClasses(session.subject.color).text
+                  )}
                 >
                   {session.subject.name}
                 </Badge>

@@ -7,6 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, Play, X, Timer, Coffee } from "lucide-react";
 import { getResumableSessions } from "@/actions/timer-actions";
 import { formatDistanceToNow } from "date-fns";
+import { getSubjectColorClasses } from "@/lib/subject-colors";
+import { cn } from "@/lib/utils";
 
 interface ResumableSession {
   id: string;
@@ -85,12 +87,12 @@ export function ResumableSessionAlert({ onResume }: ResumableSessionAlertProps) 
                 </Badge>
                 {session.subject && (
                   <Badge
-                    style={{
-                      backgroundColor: `${session.subject.color}20`,
-                      borderColor: session.subject.color,
-                      color: session.subject.color,
-                    }}
-                    className="text-xs"
+                    className={cn(
+                      "text-xs",
+                      getSubjectColorClasses(session.subject.color).softBg,
+                      getSubjectColorClasses(session.subject.color).border,
+                      getSubjectColorClasses(session.subject.color).text
+                    )}
                   >
                     {session.subject.name}
                   </Badge>

@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Mail, Calendar, Link as LinkIcon, Plus, X, Loader2, BookOpen, Target, Edit2, Trash2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AvatarUpload } from "@/components/media/avatar-upload";
@@ -20,7 +21,14 @@ import {
   addSubject,
   updateSubject,
   deleteSubject,
+  getUserTimezone,
+  updateUserTimezone,
 } from "@/actions/settings-actions";
+import { getSubjectColorClasses } from "@/lib/subject-colors";
+import { cn } from "@/lib/utils";
+import { TIMEZONES, getTimezoneLabel } from "@/lib/timezone-utils";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Globe } from "lucide-react";
 
 interface SocialLink {
   platform: string;
@@ -45,9 +53,10 @@ const PRESET_COLORS = [
 ];
 
 export default function ProfilePage() {
-  const { user, isLoading } = useAuth();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
   const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -58,14 +67,13 @@ export default function ProfilePage() {
   const [avatarUrl, setAvatarUrl] = useState<string | null>(user?.image || null);
 
   // Study settings state
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [dailyGoal, setDailyGoal] = useState(120);
   const [editingSubjectId, setEditingSubjectId] = useState<string | null>(null);
   const [editingSubjectName, setEditingSubjectName] = useState("");
   const [editingSubjectColor, setEditingSubjectColor] = useState("");
   const [newSubjectName, setNewSubjectName] = useState("");
   const [newSubjectColor, setNewSubjectColor] = useState(PRESET_COLORS[0]);
-  const [isLoadingSettings, setIsLoadingSettings] = useState(true);
+  const [editingDailyGoal, setEditingDailyGoal] = useState<number>(120);
+  const [selectedTimezone, setSelectedTimezone] = useState<string>("Asia/Kolkata");
 
   // Load existing profile picture when user data is available
   useEffect(() => {
@@ -74,34 +82,230 @@ export default function ProfilePage() {
     }
   }, [user?.image]);
 
-  // Load study settings
-  useEffect(() => {
-    const loadSettings = async () => {
-      setIsLoadingSettings(true);
-      try {
-        const [subjectsResult, goalResult] = await Promise.all([
-          getUserSubjects(),
-          getDailyGoal(),
-        ]);
-
-        if (subjectsResult.success && subjectsResult.data) {
-          setSubjects(subjectsResult.data);
-        }
-
-        if (goalResult.success && goalResult.data !== undefined) {
-          setDailyGoal(goalResult.data);
-        }
-      } catch (error) {
-        console.error("Error loading settings:", error);
-      } finally {
-        setIsLoadingSettings(false);
+  // Fetch subjects with React Query
+  const {
+    data: subjects = [],
+    isLoading: isLoadingSubjects,
+  } = useQuery({
+    queryKey: ["subjects"],
+    queryFn: async () => {
+      const result = await getUserSubjects();
+      if (!result.success) {
+        return [];
       }
-    };
+      return result.data || [];
+    },
+    enabled: !!user,
+  });
 
-    if (user) {
-      loadSettings();
-    }
-  }, [user]);
+  // Fetch timezone with React Query
+  const {
+    data: userTimezone = "Asia/Kolkata",
+    isLoading: isLoadingTimezone,
+  } = useQuery({
+    queryKey: ["userTimezone"],
+    queryFn: async () => {
+      const result = await getUserTimezone();
+      if (!result.success) {
+        return "Asia/Kolkata";
+      }
+      return result.data || "Asia/Kolkata";
+    },
+    enabled: !!user,
+  });
+
+  // Fetch daily goal with React Query
+  const {
+    data: dailyGoal = 120,
+    isLoading: isLoadingGoal,
+  } = useQuery({
+    queryKey: ["dailyGoal"],
+    queryFn: async () => {
+      const result = await getDailyGoal();
+      if (!result.success) {
+        return 120;
+      }
+      return result.data || 120;
+    },
+    enabled: !!user,
+  });
+
+  const isLoadingSettings = isLoadingSubjects || isLoadingGoal || isLoadingTimezone;
+
+  // Update profile mutation
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: { displayName: string; bio: string; socialLinks: string[] }) => {
+      const result = await updateProfile(data);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update profile");
+      }
+      return result;
+    },
+    onSuccess: () => {
+      setSuccessMessage("Profile updated successfully!");
+      setIsEditing(false);
+    },
+    onError: (error) => {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update profile");
+    },
+  });
+
+  // Update avatar mutation
+  const updateAvatarMutation = useMutation({
+    mutationFn: async (url: string) => {
+      const result = await updateAvatar(url);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update avatar");
+      }
+      return { url };
+    },
+    onSuccess: ({ url }) => {
+      setAvatarUrl(url);
+      setSuccessMessage("Profile picture updated successfully!");
+    },
+    onError: (error) => {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update profile picture");
+    },
+  });
+
+  // Remove avatar mutation
+  const removeAvatarMutation = useMutation({
+    mutationFn: async (currentAvatarUrl: string | null) => {
+      // Delete the file from media storage if it exists
+      if (currentAvatarUrl && currentAvatarUrl.startsWith("/api/media/")) {
+        const pathParts = currentAvatarUrl.replace("/api/media/", "").split("/");
+        const filename = pathParts.pop() || "";
+        await deleteFile(pathParts, filename);
+      }
+
+      const result = await removeAvatar();
+      if (!result.success) {
+        throw new Error(result.error || "Failed to remove avatar");
+      }
+      return result;
+    },
+    onSuccess: () => {
+      setAvatarUrl(null);
+      setSuccessMessage("Profile picture removed successfully!");
+    },
+    onError: (error) => {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to remove profile picture");
+    },
+  });
+
+  // Update timezone mutation
+  const updateTimezoneMutation = useMutation({
+    mutationFn: async (timezone: string) => {
+      const result = await updateUserTimezone(timezone);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update timezone");
+      }
+      return result;
+    },
+    onSuccess: () => {
+      setSuccessMessage("Timezone updated successfully! Goals will reset at your local midnight.");
+      queryClient.invalidateQueries({ queryKey: ["userTimezone"] });
+    },
+    onError: (error) => {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update timezone");
+    },
+  });
+
+  // Update daily goal mutation
+  const updateDailyGoalMutation = useMutation({
+    mutationFn: async (goal: number) => {
+      const result = await updateDailyGoal(goal);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update daily goal");
+      }
+      return result;
+    },
+    onSuccess: () => {
+      setSuccessMessage("Daily study goal updated successfully!");
+      queryClient.invalidateQueries({ queryKey: ["dailyGoal"] });
+    },
+    onError: (error) => {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update daily goal");
+    },
+  });
+
+  // Add subject mutation
+  const addSubjectMutation = useMutation({
+    mutationFn: async (data: { name: string; color: string }) => {
+      const result = await addSubject(data);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to add subject");
+      }
+      return result;
+    },
+    onSuccess: () => {
+      setSuccessMessage("Subject added successfully!");
+      setNewSubjectName("");
+      setNewSubjectColor(PRESET_COLORS[0]);
+      queryClient.invalidateQueries({ queryKey: ["subjects"] });
+    },
+    onError: (error) => {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to add subject");
+    },
+  });
+
+  // Update subject mutation
+  const updateSubjectMutation = useMutation({
+    mutationFn: async (data: { id: string; name: string; color: string }) => {
+      const result = await updateSubject(data.id, { name: data.name, color: data.color });
+      if (!result.success) {
+        throw new Error(result.error || "Failed to update subject");
+      }
+      return result;
+    },
+    onSuccess: () => {
+      setSuccessMessage("Subject updated successfully!");
+      setEditingSubjectId(null);
+      queryClient.invalidateQueries({ queryKey: ["subjects"] });
+    },
+    onError: (error) => {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to update subject");
+    },
+  });
+
+  // Delete subject mutation
+  const deleteSubjectMutation = useMutation({
+    mutationFn: async (subjectId: string) => {
+      const result = await deleteSubject(subjectId);
+      if (!result.success) {
+        throw new Error(result.error || "Failed to delete subject");
+      }
+      return result;
+    },
+    onSuccess: () => {
+      setSuccessMessage("Subject deleted successfully!");
+      queryClient.invalidateQueries({ queryKey: ["subjects"] });
+    },
+    onError: (error) => {
+      setErrorMessage(error instanceof Error ? error.message : "Failed to delete subject");
+    },
+  });
+
+  // Sync editing daily goal with fetched data
+  useEffect(() => {
+    setEditingDailyGoal(dailyGoal);
+  }, [dailyGoal]);
+
+  // Sync selected timezone with fetched data
+  useEffect(() => {
+    setSelectedTimezone(userTimezone);
+  }, [userTimezone]);
+
+  // Computed saving state from all mutations
+  const isSaving =
+    updateProfileMutation.isPending ||
+    updateAvatarMutation.isPending ||
+    removeAvatarMutation.isPending ||
+    updateTimezoneMutation.isPending ||
+    updateDailyGoalMutation.isPending ||
+    addSubjectMutation.isPending ||
+    updateSubjectMutation.isPending ||
+    deleteSubjectMutation.isPending;
 
   const handleAddSocialLink = () => {
     if (socialLinks.length < 3) {
@@ -119,116 +323,43 @@ export default function ProfilePage() {
     setSocialLinks(updated);
   };
 
-  const handleSaveProfile = async () => {
-    setIsSaving(true);
+  const handleSaveProfile = () => {
     setSuccessMessage("");
     setErrorMessage("");
-
-    try {
-      const result = await updateProfile({
-        displayName,
-        bio,
-        socialLinks: socialLinks.map(link => JSON.stringify(link)),
-      });
-
-      if (result.success) {
-        setSuccessMessage("Profile updated successfully!");
-        setIsEditing(false);
-      } else {
-        setErrorMessage(result.error || "Failed to update profile");
-      }
-    } catch {
-      setErrorMessage("Failed to update profile. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
+    updateProfileMutation.mutate({
+      displayName,
+      bio,
+      socialLinks: socialLinks.map(link => JSON.stringify(link)),
+    });
   };
 
-  const handleAvatarUpload = async (url: string) => {
-    const result = await updateAvatar(url);
-    
-    if (result.success) {
-      setAvatarUrl(url);
-      setSuccessMessage("Profile picture updated successfully!");
-    } else {
-      setErrorMessage(result.error || "Failed to update profile picture");
-    }
+  const handleAvatarUpload = (url: string) => {
+    updateAvatarMutation.mutate(url);
   };
 
-  const handleAvatarRemove = async () => {
-    // Delete the file from media storage if it exists
-    if (avatarUrl && avatarUrl.startsWith("/api/media/")) {
-      const pathParts = avatarUrl.replace("/api/media/", "").split("/");
-      const filename = pathParts.pop() || "";
-      await deleteFile(pathParts, filename);
-    }
-
-    // Remove from database
-    const result = await removeAvatar();
-    
-    if (result.success) {
-      setAvatarUrl(null);
-      setSuccessMessage("Profile picture removed successfully!");
-    } else {
-      setErrorMessage(result.error || "Failed to remove profile picture");
-    }
+  const handleAvatarRemove = () => {
+    removeAvatarMutation.mutate(avatarUrl);
   };
 
   // Study settings handlers
-  const handleSaveDailyGoal = async () => {
-    setIsSaving(true);
+  const handleSaveDailyGoal = () => {
     setSuccessMessage("");
     setErrorMessage("");
-
-    try {
-      const result = await updateDailyGoal(dailyGoal);
-
-      if (result.success) {
-        setSuccessMessage("Daily study goal updated successfully!");
-      } else {
-        setErrorMessage(result.error || "Failed to update daily goal");
-      }
-    } catch {
-      setErrorMessage("Failed to update daily goal. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
+    updateDailyGoalMutation.mutate(editingDailyGoal);
   };
 
-  const handleAddSubject = async () => {
+  const handleAddSubject = () => {
     if (!newSubjectName.trim()) {
       setErrorMessage("Please enter a subject name");
       return;
     }
 
-    setIsSaving(true);
     setSuccessMessage("");
     setErrorMessage("");
-
-    try {
-      const result = await addSubject({
-        name: newSubjectName.trim(),
-        color: newSubjectColor,
-      });
-
-      if (result.success) {
-        // Reload subjects
-        const subjectsResult = await getUserSubjects();
-        if (subjectsResult.success && subjectsResult.data) {
-          setSubjects(subjectsResult.data);
-        }
-
-        setNewSubjectName("");
-        setNewSubjectColor(PRESET_COLORS[0]);
-        setSuccessMessage("Subject added successfully!");
-      } else {
-        setErrorMessage(result.error || "Failed to add subject");
-      }
-    } catch {
-      setErrorMessage("Failed to add subject. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
+    addSubjectMutation.mutate({
+      name: newSubjectName.trim(),
+      color: newSubjectColor,
+    });
   };
 
   const handleStartEditSubject = (subject: Subject) => {
@@ -237,38 +368,18 @@ export default function ProfilePage() {
     setEditingSubjectColor(subject.color);
   };
 
-  const handleSaveEditSubject = async () => {
+  const handleSaveEditSubject = () => {
     if (!editingSubjectId || !editingSubjectName.trim()) {
       return;
     }
 
-    setIsSaving(true);
     setSuccessMessage("");
     setErrorMessage("");
-
-    try {
-      const result = await updateSubject(editingSubjectId, {
-        name: editingSubjectName.trim(),
-        color: editingSubjectColor,
-      });
-
-      if (result.success) {
-        // Reload subjects
-        const subjectsResult = await getUserSubjects();
-        if (subjectsResult.success && subjectsResult.data) {
-          setSubjects(subjectsResult.data);
-        }
-
-        setEditingSubjectId(null);
-        setSuccessMessage("Subject updated successfully!");
-      } else {
-        setErrorMessage(result.error || "Failed to update subject");
-      }
-    } catch {
-      setErrorMessage("Failed to update subject. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
+    updateSubjectMutation.mutate({
+      id: editingSubjectId,
+      name: editingSubjectName.trim(),
+      color: editingSubjectColor,
+    });
   };
 
   const handleCancelEditSubject = () => {
@@ -277,37 +388,24 @@ export default function ProfilePage() {
     setEditingSubjectColor("");
   };
 
-  const handleDeleteSubject = async (subjectId: string) => {
+  const handleDeleteSubject = (subjectId: string) => {
     if (!confirm("Are you sure you want to delete this subject? This action cannot be undone.")) {
       return;
     }
 
-    setIsSaving(true);
     setSuccessMessage("");
     setErrorMessage("");
-
-    try {
-      const result = await deleteSubject(subjectId);
-
-      if (result.success) {
-        // Reload subjects
-        const subjectsResult = await getUserSubjects();
-        if (subjectsResult.success && subjectsResult.data) {
-          setSubjects(subjectsResult.data);
-        }
-
-        setSuccessMessage("Subject deleted successfully!");
-      } else {
-        setErrorMessage(result.error || "Failed to delete subject");
-      }
-    } catch {
-      setErrorMessage("Failed to delete subject. Please try again.");
-    } finally {
-      setIsSaving(false);
-    }
+    deleteSubjectMutation.mutate(subjectId);
   };
 
-  if (isLoading) {
+  const handleTimezoneChange = (timezone: string) => {
+    setSelectedTimezone(timezone);
+    setSuccessMessage("");
+    setErrorMessage("");
+    updateTimezoneMutation.mutate(timezone);
+  };
+
+  if (isLoadingSubjects || isLoadingGoal || isLoadingTimezone) {
     return (
       <div className="container mx-auto py-10 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
@@ -545,22 +643,26 @@ export default function ProfilePage() {
                             />
                           </div>
                           <div className="flex gap-1">
-                            {PRESET_COLORS.map((color) => (
-                              <button
-                                key={color}
-                                type="button"
-                                className={`w-8 h-8 rounded-full border-2 transition-all ${
-                                  editingSubjectColor === color
-                                    ? "border-foreground scale-110"
-                                    : "border-transparent hover:scale-105"
-                                }`}
-                                style={{ backgroundColor: color }}
-                                onClick={() => setEditingSubjectColor(color)}
-                                disabled={isSaving}
-                              >
-                                <span className="sr-only">{color}</span>
-                              </button>
-                            ))}
+                            {PRESET_COLORS.map((color) => {
+                              const colorClasses = getSubjectColorClasses(color);
+                              return (
+                                <button
+                                  key={color}
+                                  type="button"
+                                  className={cn(
+                                    "w-8 h-8 rounded-full border-2 transition-all",
+                                    colorClasses.bg,
+                                    editingSubjectColor === color
+                                      ? "border-foreground scale-110"
+                                      : "border-transparent hover:scale-105"
+                                  )}
+                                  onClick={() => setEditingSubjectColor(color)}
+                                  disabled={isSaving}
+                                >
+                                  <span className="sr-only">{color}</span>
+                                </button>
+                              );
+                            })}
                           </div>
                           <div className="flex gap-1">
                             <Button
@@ -587,8 +689,10 @@ export default function ProfilePage() {
                       ) : (
                         <>
                           <div
-                            className="w-4 h-4 rounded-full shrink-0"
-                            style={{ backgroundColor: subject.color }}
+                            className={cn(
+                              "w-4 h-4 rounded-full shrink-0",
+                              getSubjectColorClasses(subject.color).bg
+                            )}
                           />
                           <span className="font-medium flex-1">{subject.name}</span>
                           <Button
@@ -628,22 +732,26 @@ export default function ProfilePage() {
                       />
                     </div>
                     <div className="flex gap-1">
-                      {PRESET_COLORS.map((color) => (
-                        <button
-                          key={color}
-                          type="button"
-                          className={`w-8 h-8 rounded-full border-2 transition-all ${
-                            newSubjectColor === color
-                              ? "border-foreground scale-110"
-                              : "border-transparent hover:scale-105"
-                          }`}
-                          style={{ backgroundColor: color }}
-                          onClick={() => setNewSubjectColor(color)}
-                          disabled={isSaving}
-                        >
-                          <span className="sr-only">{color}</span>
-                        </button>
-                      ))}
+                      {PRESET_COLORS.map((color) => {
+                        const colorClasses = getSubjectColorClasses(color);
+                        return (
+                          <button
+                            key={color}
+                            type="button"
+                            className={cn(
+                              "w-8 h-8 rounded-full border-2 transition-all",
+                              colorClasses.bg,
+                              newSubjectColor === color
+                                ? "border-foreground scale-110"
+                                : "border-transparent hover:scale-105"
+                            )}
+                            onClick={() => setNewSubjectColor(color)}
+                            disabled={isSaving}
+                          >
+                            <span className="sr-only">{color}</span>
+                          </button>
+                        );
+                      })}
                     </div>
                     <Button
                       onClick={handleAddSubject}
@@ -690,8 +798,8 @@ export default function ProfilePage() {
                       min="15"
                       max="480"
                       step="15"
-                      value={dailyGoal}
-                      onChange={(e) => setDailyGoal(parseInt(e.target.value))}
+                      value={editingDailyGoal}
+                      onChange={(e) => setEditingDailyGoal(parseInt(e.target.value))}
                       className="mt-4"
                       disabled={isSaving}
                     />
@@ -706,6 +814,51 @@ export default function ProfilePage() {
                     {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     Save Daily Goal
                   </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Timezone Settings */}
+          <Card className="mt-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Globe className="h-5 w-5" />
+                Timezone
+              </CardTitle>
+              <CardDescription>
+                Goals will reset at midnight in your timezone
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isLoadingSettings ? (
+                <div className="flex items-center justify-center py-8">
+                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                </div>
+              ) : (
+                <>
+                  <div>
+                    <Label htmlFor="timezone">Your Timezone</Label>
+                    <Select
+                      value={selectedTimezone}
+                      onValueChange={handleTimezoneChange}
+                      disabled={isSaving}
+                    >
+                      <SelectTrigger id="timezone" className="mt-2">
+                        <SelectValue placeholder="Select your timezone" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIMEZONES.map((tz) => (
+                          <SelectItem key={tz.value} value={tz.value}>
+                            {tz.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Current timezone: {getTimezoneLabel(selectedTimezone)}
+                    </p>
+                  </div>
                 </>
               )}
             </CardContent>

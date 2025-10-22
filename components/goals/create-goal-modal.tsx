@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   Dialog,
   DialogContent,
@@ -23,6 +24,8 @@ import {
 import { createGoal } from "@/actions/goals-actions";
 import { getUserSubjects } from "@/actions/settings-actions";
 import { toast } from "sonner";
+import { getSubjectColorClasses } from "@/lib/subject-colors";
+import { cn } from "@/lib/utils";
 
 type CreateGoalModalProps = {
   open: boolean;
@@ -35,11 +38,6 @@ export function CreateGoalModal({
   onClose,
   onSuccess,
 }: CreateGoalModalProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const [subjects, setSubjects] = useState<
-    Array<{ id: string; name: string; color: string }>
-  >([]);
-
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -50,44 +48,30 @@ export function CreateGoalModal({
     subjectId: "",
   });
 
-  useEffect(() => {
-    if (open) {
-      loadSubjects();
-    }
-  }, [open]);
-
-  const loadSubjects = async () => {
-    try {
+  // Fetch subjects
+  const { data: subjects = [] } = useQuery({
+    queryKey: ["subjects"],
+    queryFn: async () => {
       const result = await getUserSubjects();
-      if (result.success && result.data) {
-        setSubjects(result.data);
+      if (!result.success) {
+        return [];
       }
-    } catch (error) {
-      console.error("Error loading subjects:", error);
-    }
-  };
+      return result.data || [];
+    },
+    enabled: open,
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Create goal mutation
+  const createGoalMutation = useMutation({
+    mutationFn: async () => {
+      const target = parseInt(formData.target);
+      if (isNaN(target) || target <= 0) {
+        throw new Error("Please enter a valid target");
+      }
 
-    if (!formData.title.trim()) {
-      toast.error("Please enter a title");
-      return;
-    }
-
-    const target = parseInt(formData.target);
-    if (isNaN(target) || target <= 0) {
-      toast.error("Please enter a valid target");
-      return;
-    }
-
-    if (formData.category === "subject" && !formData.subjectId) {
-      toast.error("Please select a subject");
-      return;
-    }
-
-    try {
-      setIsLoading(true);
+      if (formData.category === "subject" && !formData.subjectId) {
+        throw new Error("Please select a subject");
+      }
 
       const result = await createGoal({
         title: formData.title,
@@ -100,26 +84,38 @@ export function CreateGoalModal({
           formData.category === "subject" ? formData.subjectId : undefined,
       });
 
-      if (result.success) {
-        onSuccess();
-        setFormData({
-          title: "",
-          description: "",
-          category: "study",
-          period: "daily",
-          unit: "minutes",
-          target: "",
-          subjectId: "",
-        });
-      } else {
-        toast.error(result.error || "Failed to create goal");
+      if (!result.success) {
+        throw new Error(result.error || "Failed to create goal");
       }
-    } catch (error) {
-      console.error("Error creating goal:", error);
-      toast.error("Failed to create goal");
-    } finally {
-      setIsLoading(false);
+
+      return result;
+    },
+    onSuccess: () => {
+      setFormData({
+        title: "",
+        description: "",
+        category: "study",
+        period: "daily",
+        unit: "minutes",
+        target: "",
+        subjectId: "",
+      });
+      onSuccess();
+    },
+    onError: (error) => {
+      toast.error(error instanceof Error ? error.message : "Failed to create goal");
+    },
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!formData.title.trim()) {
+      toast.error("Please enter a title");
+      return;
     }
+
+    createGoalMutation.mutate();
   };
 
   const handleCategoryChange = (category: "study" | "subject") => {
@@ -236,8 +232,10 @@ export function CreateGoalModal({
                       <SelectItem key={subject.id} value={subject.id}>
                         <div className="flex items-center gap-2">
                           <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: subject.color }}
+                            className={cn(
+                              "w-3 h-3 rounded-full",
+                              getSubjectColorClasses(subject.color).bg
+                            )}
                           />
                           {subject.name}
                         </div>
@@ -295,8 +293,8 @@ export function CreateGoalModal({
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Creating..." : "Create Goal"}
+            <Button type="submit" disabled={createGoalMutation.isPending}>
+              {createGoalMutation.isPending ? "Creating..." : "Create Goal"}
             </Button>
           </DialogFooter>
         </form>

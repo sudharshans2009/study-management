@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { getSessions, getSessionStats } from "@/actions/session-actions";
-import type { SessionWithSubject, SessionFilters, SessionSort } from "@/actions/session-actions";
+import type { SessionFilters, SessionSort } from "@/actions/session-actions";
 import { SessionStats } from "@/components/sessions/session-stats";
 import { SessionFiltersBar } from "@/components/sessions/session-filters-bar";
 import { SessionList } from "@/components/sessions/session-list";
@@ -13,20 +14,7 @@ import { ArrowUpDown } from "lucide-react";
 import { useSessionCleanup } from "@/hooks/use-session-cleanup";
 import { useSessionExpiryNotifications } from "@/hooks/use-session-expiry-notifications";
 
-type SessionStatsData = {
-  totalSessions: number;
-  totalMinutes: number;
-  totalHours: string;
-  avgMinutes: number;
-  longestMinutes: number;
-  avgFocusScore: string | null;
-};
-
 export default function SessionsPage() {
-  const [sessions, setSessions] = useState<SessionWithSubject[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState<SessionStatsData | null>(null);
-  
   // Auto-cleanup expired paused sessions
   useSessionCleanup();
   
@@ -42,40 +30,35 @@ export default function SessionsPage() {
     order: "desc",
   });
 
-  // Load sessions
-  const loadSessions = useCallback(async () => {
-    setIsLoading(true);
-    try {
+  // Fetch sessions with React Query
+  const {
+    data: sessions = [],
+    isLoading,
+    refetch: refetchSessions,
+  } = useQuery({
+    queryKey: ["sessions", filters, sort],
+    queryFn: async () => {
       const result = await getSessions(filters, sort);
-      if (result.success && result.data) {
-        setSessions(result.data);
-      } else {
+      if (!result.success) {
         console.error("Failed to load sessions:", result.error);
+        return [];
       }
-    } catch (error) {
-      console.error("Error loading sessions:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [filters, sort]);
+      return result.data || [];
+    },
+  });
 
-  // Load statistics
-  const loadStats = useCallback(async () => {
-    try {
+  // Fetch session statistics
+  const { data: stats = null, refetch: refetchStats } = useQuery({
+    queryKey: ["sessionStats", filters.dateRange],
+    queryFn: async () => {
       const result = await getSessionStats(filters.dateRange || "all");
-      if (result.success && result.data) {
-        setStats(result.data);
+      if (!result.success) {
+        console.error("Failed to load stats:", result.error);
+        return null;
       }
-    } catch (error) {
-      console.error("Error loading stats:", error);
-    }
-  }, [filters.dateRange]);
-
-  // Load data on mount and when filters/sort change
-  useEffect(() => {
-    loadSessions();
-    loadStats();
-  }, [loadSessions, loadStats]);
+      return result.data || null;
+    },
+  });
 
   // Toggle sort order
   const toggleSort = () => {
@@ -90,8 +73,8 @@ export default function SessionsPage() {
   };
 
   const handleRefresh = () => {
-    loadSessions();
-    loadStats();
+    refetchSessions();
+    refetchStats();
   };
 
   return (

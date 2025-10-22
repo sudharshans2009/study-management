@@ -11,6 +11,7 @@ export const user = pgTable("user", {
   })
     .default("pending_verification")
     .notNull(),
+  timezone: text("timezone").default("Asia/Kolkata").notNull(), // User's timezone for goal resets
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -181,12 +182,27 @@ export const goal = pgTable("goal", {
     .default("active")
     .notNull(),
   
-  // Time tracking
+  // Lifecycle management (Phase 2)
+  startDate: timestamp("start_date", { mode: "date", withTimezone: true })
+    .notNull()
+    .defaultNow(), // When tracking started
+  endDate: timestamp("end_date", { mode: "date", withTimezone: true }), // When tracking ended (null = still active)
+  endReason: text("end_reason", { enum: ["completed", "archived"] }), // Why tracking ended
+  
+  // Period tracking (Phase 2)
+  currentPeriodStart: timestamp("current_period_start", { mode: "date", withTimezone: true })
+    .notNull()
+    .defaultNow(), // Start of current tracking window
+  lastResetAt: timestamp("last_reset_at", { mode: "date", withTimezone: true }), // Last time progress was reset
+  
+  // Progress metadata (Phase 2)
+  totalPeriodsCompleted: integer("total_periods_completed").default(0).notNull(), // How many periods user completed this goal
+  currentStreak: integer("current_streak").default(0).notNull(), // Consecutive periods completed
+  longestStreak: integer("longest_streak").default(0).notNull(), // Best streak achieved
+  
+  // Legacy fields (deprecated - keep for backward compatibility)
   startAt: timestamp("start_at", { mode: "date", withTimezone: true }),
   endAt: timestamp("end_at", { mode: "date", withTimezone: true }),
-  
-  // Last reset timestamp for recurring goals
-  lastResetAt: timestamp("last_reset_at", { mode: "date", withTimezone: true }),
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")

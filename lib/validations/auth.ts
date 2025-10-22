@@ -26,6 +26,7 @@ export const setupProfileSchema = z.object({
     color: z.string().optional(),
   })).min(1, "Add at least one subject"),
   dailyGoal: z.number().min(15, "Daily goal must be at least 15 minutes").max(1440, "Daily goal cannot exceed 24 hours"),
+  timezone: z.string().min(1, "Please select your timezone"),
 });
 
 export type SetupProfileFormData = z.infer<typeof setupProfileSchema>;

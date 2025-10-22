@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Plus, Target, TrendingUp } from "lucide-react";
@@ -8,6 +9,7 @@ import { CreateGoalModal } from "@/components/goals/create-goal-modal";
 import { GoalCard } from "@/components/goals/goal-card";
 import { getUserGoalsWithProgress } from "@/actions/goals-actions";
 import { toast } from "sonner";
+import { useGoalPeriodCheck } from "@/hooks/use-goal-period-check";
 
 type GoalWithProgress = {
   id: string;
@@ -19,6 +21,9 @@ type GoalWithProgress = {
   target: number;
   subjectId?: string | null;
   status: "active" | "completed" | "archived";
+  currentStreak?: number | null;
+  longestStreak?: number | null;
+  endDate?: Date | null;
   createdAt: Date;
   updatedAt: Date;
   progress?: {
@@ -30,8 +35,6 @@ type GoalWithProgress = {
 };
 
 export default function GoalsPage() {
-  const [goals, setGoals] = useState<GoalWithProgress[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [filter, setFilter] = useState<{
     category?: "study" | "subject";
@@ -39,41 +42,40 @@ export default function GoalsPage() {
     status?: "active" | "completed" | "archived";
   }>({ status: "active" });
 
-  const loadGoals = async () => {
-    try {
-      setIsLoading(true);
+  // Enable automatic period checking
+  useGoalPeriodCheck(true);
+
+  // Fetch goals with React Query
+  const {
+    data: goals = [],
+    isLoading,
+    refetch,
+  } = useQuery({
+    queryKey: ["goals", filter],
+    queryFn: async () => {
       const result = await getUserGoalsWithProgress(filter);
 
-      if (result.success && result.data) {
-        setGoals(result.data);
-      } else {
+      if (!result.success) {
         toast.error(result.error || "Failed to load goals");
+        return [];
       }
-    } catch (error) {
-      console.error("Error loading goals:", error);
-      toast.error("Failed to load goals");
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
-  useEffect(() => {
-    loadGoals();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter]);
+      return (result.data || []) as GoalWithProgress[];
+    },
+  });
 
   const handleGoalCreated = () => {
     setShowCreateModal(false);
-    loadGoals();
+    refetch();
     toast.success("Goal created successfully!");
   };
 
   const handleGoalUpdated = () => {
-    loadGoals();
+    refetch();
   };
 
   const handleGoalDeleted = () => {
-    loadGoals();
+    refetch();
     toast.success("Goal deleted successfully!");
   };
 
@@ -154,6 +156,13 @@ export default function GoalsPage() {
 
       {/* Filters */}
       <div className="flex gap-2 mb-6 flex-wrap">
+        <Button
+          variant={!filter.status ? "default" : "outline"}
+          size="sm"
+          onClick={() => setFilter({ ...filter, status: undefined })}
+        >
+          All
+        </Button>
         <Button
           variant={filter.status === "active" ? "default" : "outline"}
           size="sm"

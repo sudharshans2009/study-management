@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -17,10 +17,20 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { getSubjectColorClasses } from "@/lib/subject-colors";
+import { cn } from "@/lib/utils";
+import { TIMEZONES, detectBrowserTimezone } from "@/lib/timezone-utils";
 
 const PRESET_COLORS = [
   "#3B82F6", // blue
@@ -45,8 +55,15 @@ export function SetupProfileForm() {
       fullName: "",
       subjects: [{ name: "", color: PRESET_COLORS[0] }],
       dailyGoal: 120, // 2 hours default
+      timezone: detectBrowserTimezone(), // Auto-detect browser timezone
     },
   });
+
+  // Auto-detect timezone on mount
+  useEffect(() => {
+    const detected = detectBrowserTimezone();
+    form.setValue("timezone", detected);
+  }, [form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
@@ -89,7 +106,7 @@ export function SetupProfileForm() {
     } else if (currentStep === 2) {
       fieldsToValidate = ["subjects"];
     } else if (currentStep === 3) {
-      fieldsToValidate = ["dailyGoal"];
+      fieldsToValidate = ["dailyGoal", "timezone"];
     }
 
     const isValid = await form.trigger(fieldsToValidate);
@@ -217,21 +234,25 @@ export function SetupProfileForm() {
                       <FormItem>
                         <FormControl>
                           <div className="flex gap-1">
-                            {PRESET_COLORS.map((color) => (
-                              <button
-                                key={color}
-                                type="button"
-                                className={`w-8 h-8 rounded-full border-2 ${
-                                  field.value === color
-                                    ? "border-foreground"
-                                    : "border-transparent"
-                                }`}
-                                style={{ backgroundColor: color }}
-                                onClick={() => field.onChange(color)}
-                              >
-                                <p className="sr-only">{color}</p>
-                              </button>
-                            ))}
+                            {PRESET_COLORS.map((color) => {
+                              const subjectColor = getSubjectColorClasses(color);
+                              return (
+                                <button
+                                  key={color}
+                                  type="button"
+                                  className={cn(
+                                    "w-8 h-8 rounded-full border-2",
+                                    subjectColor.bg,
+                                    field.value === color
+                                      ? "border-foreground"
+                                      : "border-transparent"
+                                  )}
+                                  onClick={() => field.onChange(color)}
+                                >
+                                  <p className="sr-only">{color}</p>
+                                </button>
+                              );
+                            })}
                           </div>
                         </FormControl>
                       </FormItem>
@@ -271,16 +292,16 @@ export function SetupProfileForm() {
           </Card>
         )}
 
-        {/* Step 3: Daily Goal */}
+        {/* Step 3: Daily Goal & Timezone */}
         {currentStep === 3 && (
           <Card>
             <CardHeader>
-              <CardTitle>Daily Study Goal</CardTitle>
+              <CardTitle>Daily Study Goal & Timezone</CardTitle>
               <CardDescription>
-                Set your daily study time target
+                Set your daily study time target and timezone
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
               <FormField
                 control={form.control}
                 name="dailyGoal"
@@ -305,6 +326,38 @@ export function SetupProfileForm() {
                     </FormControl>
                     <FormDescription>
                       Recommended: 2-4 hours per day for optimal learning
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="timezone"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Your Timezone</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={setupMutation.isPending}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select your timezone" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {TIMEZONES.map((tz) => (
+                          <SelectItem key={tz.value} value={tz.value}>
+                            {tz.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>
+                      Goals will reset at midnight in your timezone
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -338,8 +391,10 @@ export function SetupProfileForm() {
                       className="flex items-center gap-2 px-3 py-1.5 rounded-lg border bg-card"
                     >
                       <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: subject.color }}
+                        className={cn(
+                          "w-3 h-3 rounded-full",
+                          getSubjectColorClasses(subject.color || "").bg
+                        )}
                       />
                       <span className="text-sm font-medium">{subject.name}</span>
                     </div>
