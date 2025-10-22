@@ -1,6 +1,32 @@
 # Authentication Property Logic
 
-## Clear Separation of Concerns
+> **Document Type:** Technical Reference  
+> **Category:** Authentication  
+> **Last Updated:** October 22, 2025
+
+---
+
+## Overview
+
+This document explains the separation of concerns between email verification and onboarding status in the SS.Study authentication system. Understanding these properties is crucial for implementing proper auth flow logic.
+
+---
+
+## Table of Contents
+
+1. [Property Definitions](#property-definitions)
+2. [Logic Flow](#logic-flow)
+3. [Route Protection](#route-protection)
+4. [Hook Properties](#hook-properties)
+5. [Design Rationale](#design-rationale)
+6. [Code Examples](#code-examples)
+7. [Code Patterns](#code-patterns)
+
+---
+
+## Property Definitions
+
+### Clear Separation of Concerns
 
 ### Email Verification = `emailVerified` Property
 
@@ -242,9 +268,36 @@ if (!user.emailVerified) {
 }
 ```
 
+---
+
 ## Summary
 
-- **Email Verification** → Check `emailVerified` property (boolean)
-- **Onboarding Completion** → Check `onboardingStatus` property (enum)
-- **Always check in order:** emailVerified FIRST, then onboardingStatus
-- **Clear separation** = Better code, easier debugging, more maintainable
+### Key Takeaways
+
+- ✅ **Email Verification** → Check `emailVerified` property (boolean)
+- ✅ **Onboarding Completion** → Check `onboardingStatus` property (enum)
+- ✅ **Always check in order:** emailVerified FIRST, then onboardingStatus
+- ✅ **Clear separation** = Better code, easier debugging, more maintainable
+
+### Best Practices
+
+1. Use `emailVerified` for email verification checks
+2. Use `onboardingStatus` for onboarding completion checks
+3. Always check email verification before onboarding status
+4. Keep concerns separated for clarity and maintainability
+5. Follow the established code patterns
+
+---
+
+## Related Documentation
+
+- [Authentication Overview](./AUTH.md)
+- [Authentication Flow Fixes](./AUTH_FLOW_FIXES.md)
+- [Onboarding Flow](./ONBOARDING_FLOW.md)
+- [Authentication Setup](./AUTHENTICATION_SETUP.md)
+
+---
+
+**Document Version:** 1.0  
+**Last Updated:** October 22, 2025  
+**Maintained by:** SS.Study Team

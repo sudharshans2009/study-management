@@ -32,24 +32,18 @@ export function SessionStats({ stats, period }: SessionStatsProps) {
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
       {/* Total Study Time */}
       <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Total Study Time
-            </p>
-            <h3 className="text-2xl font-bold mt-2">
-              {stats.totalHours}h
-            </h3>
+            <p className="text-sm text-muted-foreground">Total Study Time</p>
+            <p className="text-3xl font-bold mt-1">{stats.totalHours}h</p>
             <p className="text-xs text-muted-foreground mt-1">
-              {stats.totalMinutes} minutes • {getPeriodLabel()}
+              {stats.totalMinutes} minutes
             </p>
           </div>
-          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center">
-            <Clock className="h-6 w-6 text-primary" />
-          </div>
+          <Clock className="h-10 w-10 text-primary opacity-20" />
         </div>
       </Card>
 
@@ -57,19 +51,13 @@ export function SessionStats({ stats, period }: SessionStatsProps) {
       <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Sessions Completed
-            </p>
-            <h3 className="text-2xl font-bold mt-2">
-              {stats.totalSessions}
-            </h3>
+            <p className="text-sm text-muted-foreground">Sessions</p>
+            <p className="text-3xl font-bold mt-1">{stats.totalSessions}</p>
             <p className="text-xs text-muted-foreground mt-1">
               {getPeriodLabel()}
             </p>
           </div>
-          <div className="h-12 w-12 rounded-full bg-green-500/10 flex items-center justify-center">
-            <TrendingUp className="h-6 w-6 text-green-500" />
-          </div>
+          <TrendingUp className="h-10 w-10 text-green-500 opacity-20" />
         </div>
       </Card>
 
@@ -77,19 +65,13 @@ export function SessionStats({ stats, period }: SessionStatsProps) {
       <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Average Session
-            </p>
-            <h3 className="text-2xl font-bold mt-2">
-              {stats.avgMinutes} min
-            </h3>
+            <p className="text-sm text-muted-foreground">Avg. Session</p>
+            <p className="text-3xl font-bold mt-1">{stats.avgMinutes} min</p>
             <p className="text-xs text-muted-foreground mt-1">
               Longest: {stats.longestMinutes} min
             </p>
           </div>
-          <div className="h-12 w-12 rounded-full bg-blue-500/10 flex items-center justify-center">
-            <Target className="h-6 w-6 text-blue-500" />
-          </div>
+          <Target className="h-10 w-10 text-blue-500 opacity-20" />
         </div>
       </Card>
 
@@ -97,21 +79,17 @@ export function SessionStats({ stats, period }: SessionStatsProps) {
       <Card className="p-6">
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-muted-foreground">
-              Average Focus
-            </p>
-            <h3 className="text-2xl font-bold mt-2">
+            <p className="text-sm text-muted-foreground">Avg. Focus</p>
+            <p className="text-3xl font-bold mt-1">
               {stats.avgFocusScore 
                 ? `${stats.avgFocusScore} / 5` 
                 : "N/A"}
-            </h3>
+            </p>
             <p className="text-xs text-muted-foreground mt-1">
               {stats.avgFocusScore ? "Great focus!" : "No ratings yet"}
             </p>
           </div>
-          <div className="h-12 w-12 rounded-full bg-yellow-500/10 flex items-center justify-center">
-            <Star className="h-6 w-6 text-yellow-500" />
-          </div>
+          <Star className="h-10 w-10 text-yellow-500 opacity-20" />
         </div>
       </Card>
     </div>

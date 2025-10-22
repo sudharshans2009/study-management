@@ -10,7 +10,7 @@ import { SessionList } from "@/components/sessions/session-list";
 import { EmptySessionsState } from "@/components/sessions/empty-sessions-state";
 import { SessionListSkeleton } from "@/components/sessions/session-list-skeleton";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown } from "lucide-react";
+import { ArrowUpDown, History } from "lucide-react";
 import { useSessionCleanup } from "@/hooks/use-session-cleanup";
 import { useSessionExpiryNotifications } from "@/hooks/use-session-expiry-notifications";
 
@@ -78,59 +78,60 @@ export default function SessionsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold">Study Sessions</h1>
-            <p className="text-muted-foreground mt-2">
-              Track and analyze your study history
-            </p>
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={toggleSort}
-            className="gap-2"
-          >
-            <ArrowUpDown className="h-4 w-4" />
-            {sort.order === "desc" ? "Newest First" : "Oldest First"}
-          </Button>
+    <div className="container mx-auto p-6 max-w-7xl">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            <History className="h-8 w-8" />
+            Study Sessions
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Track and analyze your study history
+          </p>
         </div>
-
-        {/* Statistics Cards */}
-        {stats && <SessionStats stats={stats} period={filters.dateRange || "all"} />}
-
-        {/* Filters */}
-        <SessionFiltersBar
-          filters={filters}
-          onFiltersChange={handleFiltersChange}
-        />
-
-        {/* Sessions List */}
-        {isLoading ? (
-          <SessionListSkeleton />
-        ) : sessions.length === 0 ? (
-          <EmptySessionsState
-            hasFilters={
-              filters.dateRange !== "all" ||
-              (filters.subjectIds && filters.subjectIds.length > 0) ||
-              (filters.types && filters.types.length > 0) ||
-              (filters.statuses && filters.statuses.length > 0) ||
-              (filters.focusScores && filters.focusScores.length > 0) ||
-              !!filters.searchQuery
-            }
-            onClearFilters={() =>
-              setFilters({
-                dateRange: "all",
-              })
-            }
-          />
-        ) : (
-          <SessionList sessions={sessions} onRefresh={handleRefresh} />
-        )}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={toggleSort}
+          className="gap-2"
+        >
+          <ArrowUpDown className="h-4 w-4" />
+          {sort.order === "desc" ? "Newest First" : "Oldest First"}
+        </Button>
       </div>
+
+      {/* Statistics Cards */}
+      {stats && <SessionStats stats={stats} period={filters.dateRange || "all"} />}
+
+      {/* Filters */}
+      <SessionFiltersBar
+        filters={filters}
+        onFiltersChange={handleFiltersChange}
+      />
+
+      {/* Sessions List */}
+      {isLoading ? (
+        <SessionListSkeleton />
+      ) : sessions.length === 0 ? (
+        <EmptySessionsState
+          hasFilters={
+            filters.dateRange !== "all" ||
+            (filters.subjectIds && filters.subjectIds.length > 0) ||
+            (filters.types && filters.types.length > 0) ||
+            (filters.statuses && filters.statuses.length > 0) ||
+            (filters.focusScores && filters.focusScores.length > 0) ||
+            !!filters.searchQuery
+          }
+          onClearFilters={() =>
+            setFilters({
+              dateRange: "all",
+            })
+          }
+        />
+      ) : (
+        <SessionList sessions={sessions} onRefresh={handleRefresh} />
+      )}
     </div>
   );
 }
