@@ -81,11 +81,12 @@ export async function startTimerSession(data: {
         subjectId: data.subjectId || null,
         startTime: now,
         endTime,
-        duration: data.duration,
+        duration: data.duration, // Store target duration initially
         type: data.type || "timer",
         status: "active",
         isBreak: data.isBreak || false,
         pomodoroCount: 0,
+        lastResumedAt: now, // Track when this active period started
       })
       .returning();
 
@@ -138,15 +139,42 @@ export async function pauseTimerSession(
     const current = existingSession[0];
     const now = new Date();
 
-    // Calculate elapsed time
-    const elapsedSeconds = Math.floor(
-      (now.getTime() - new Date(current.startTime).getTime()) / 1000
+    // Calculate time elapsed in this active period
+    // Use lastResumedAt if session was previously resumed, otherwise use startTime
+    const measureFrom = current.lastResumedAt 
+      ? new Date(current.lastResumedAt)
+      : new Date(current.startTime);
+    
+    const activeSeconds = Math.floor(
+      (now.getTime() - measureFrom.getTime()) / 1000
     );
 
-    // Calculate remaining time and progress
-    const remaining = (current.duration || 0) - elapsedSeconds;
-    const progress = current.duration
-      ? Math.round((elapsedSeconds / current.duration) * 100)
+    // For sessions that haven't been paused before, duration is the target
+    // For resumed sessions, duration is already accumulated time
+    // We need to distinguish between first pause and subsequent pauses
+    const isFirstPause = !current.pausedAt; // Never been paused before
+    
+    let accumulatedTime: number;
+    if (isFirstPause) {
+      // First pause: activeSeconds is the accumulated time
+      accumulatedTime = activeSeconds;
+    } else {
+      // Subsequent pause: add activeSeconds to existing accumulated time
+      accumulatedTime = (current.duration || 0) + activeSeconds;
+    }
+
+    // Calculate remaining time (for timers with target duration)
+    // If this is first pause, calculate from original endTime
+    let remaining = 0;
+    if (current.endTime) {
+      const targetDuration = Math.floor(
+        (new Date(current.endTime).getTime() - new Date(current.startTime).getTime()) / 1000
+      );
+      remaining = Math.max(0, targetDuration - accumulatedTime);
+    }
+    
+    const progress = current.endTime
+      ? Math.round((accumulatedTime / (accumulatedTime + remaining)) * 100)
       : 0;
 
     // Update session
@@ -154,7 +182,7 @@ export async function pauseTimerSession(
       .update(studySession)
       .set({
         status: "paused",
-        duration: elapsedSeconds,
+        duration: accumulatedTime, // Store accumulated time
         pausedAt: now,
         remainingDuration: remaining,
         progressPercentage: progress,
@@ -213,26 +241,19 @@ export async function resumeTimerSession(
     const current = existingSession[0];
     const now = new Date();
 
-    // Calculate remaining time based on stored duration
-    const originalDuration = current.endTime
-      ? Math.floor(
-          (new Date(current.endTime).getTime() -
-            new Date(current.startTime).getTime()) /
-            1000
-        )
-      : current.duration;
+    // Calculate new end time based on remaining duration
+    const remainingTime = current.remainingDuration || 0;
+    const newEndTime = remainingTime > 0 
+      ? new Date(now.getTime() + remainingTime * 1000)
+      : null;
 
-    const remainingTime = originalDuration - current.duration;
-    const newEndTime = new Date(now.getTime() + remainingTime * 1000);
-
-    // Update session
+    // Update session - keep accumulated duration, set lastResumedAt to track new active period
     const updated = await db
       .update(studySession)
       .set({
         status: "active",
-        startTime: now, // New start time for accurate elapsed calculation
         endTime: newEndTime,
-        lastResumedAt: now,
+        lastResumedAt: now, // Track when this active period started
         updatedAt: now,
       })
       .where(eq(studySession.id, sessionId))
@@ -290,15 +311,36 @@ export async function completeTimerSession(
     const current = existingSession[0];
     const now = new Date();
 
-    // Always calculate actual elapsed time from startTime to now
-    // This ensures we capture the real duration regardless of status
-    const elapsedSeconds = Math.floor(
-      (now.getTime() - new Date(current.startTime).getTime()) / 1000
-    );
-
-    // Use the greater of elapsed time or stored duration
-    // This handles edge cases where duration might have been updated during pauses
-    const finalDuration = Math.max(elapsedSeconds, current.duration || 0);
+    // Calculate actual time spent studying
+    let finalDuration: number;
+    
+    if (current.status === 'active') {
+      // Session is active - calculate time since last resume/start
+      const measureFrom = current.lastResumedAt 
+        ? new Date(current.lastResumedAt)
+        : new Date(current.startTime);
+      
+      const activeSeconds = Math.floor(
+        (now.getTime() - measureFrom.getTime()) / 1000
+      );
+      
+      // Check if this is first completion (never paused)
+      const isFirstCompletion = !current.pausedAt;
+      
+      if (isFirstCompletion) {
+        // Never paused: activeSeconds is the total time
+        finalDuration = activeSeconds;
+      } else {
+        // Was paused before: add activeSeconds to accumulated duration
+        finalDuration = (current.duration || 0) + activeSeconds;
+      }
+    } else if (current.status === 'paused') {
+      // Session is paused - duration already contains accumulated time
+      finalDuration = current.duration || 0;
+    } else {
+      // Fallback for other statuses
+      finalDuration = current.duration || 0;
+    }
 
     // Update session
     const updated = await db
@@ -365,10 +407,36 @@ export async function cancelTimerSession(
     const current = existingSession[0];
     const now = new Date();
 
-    // Calculate actual elapsed time in seconds
-    const elapsedSeconds = Math.floor(
-      (now.getTime() - new Date(current.startTime).getTime()) / 1000
-    );
+    // Calculate actual time spent studying (same logic as complete)
+    let finalDuration: number;
+    
+    if (current.status === 'active') {
+      // Session is active - calculate time since last resume/start
+      const measureFrom = current.lastResumedAt 
+        ? new Date(current.lastResumedAt)
+        : new Date(current.startTime);
+      
+      const activeSeconds = Math.floor(
+        (now.getTime() - measureFrom.getTime()) / 1000
+      );
+      
+      // Check if this is first cancellation (never paused)
+      const isFirstCancellation = !current.pausedAt;
+      
+      if (isFirstCancellation) {
+        // Never paused: activeSeconds is the total time
+        finalDuration = activeSeconds;
+      } else {
+        // Was paused before: add activeSeconds to accumulated duration
+        finalDuration = (current.duration || 0) + activeSeconds;
+      }
+    } else if (current.status === 'paused') {
+      // Session is paused - duration already contains accumulated time
+      finalDuration = current.duration || 0;
+    } else {
+      // Fallback for other statuses
+      finalDuration = current.duration || 0;
+    }
 
     // Update session with cancelled status and actual elapsed duration
     const updated = await db
@@ -376,7 +444,7 @@ export async function cancelTimerSession(
       .set({
         status: "cancelled",
         endTime: now,
-        duration: elapsedSeconds, // Save the actual elapsed time
+        duration: finalDuration, // Save the actual time spent
         updatedAt: now,
       })
       .where(
