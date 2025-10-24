@@ -290,13 +290,15 @@ export async function completeTimerSession(
     const current = existingSession[0];
     const now = new Date();
 
-    // Calculate final duration
-    let finalDuration = current.duration;
-    if (current.status === "active") {
-      finalDuration = Math.floor(
-        (now.getTime() - new Date(current.startTime).getTime()) / 1000
-      );
-    }
+    // Always calculate actual elapsed time from startTime to now
+    // This ensures we capture the real duration regardless of status
+    const elapsedSeconds = Math.floor(
+      (now.getTime() - new Date(current.startTime).getTime()) / 1000
+    );
+
+    // Use the greater of elapsed time or stored duration
+    // This handles edge cases where duration might have been updated during pauses
+    const finalDuration = Math.max(elapsedSeconds, current.duration || 0);
 
     // Update session
     const updated = await db
@@ -329,6 +331,7 @@ export async function completeTimerSession(
 
 /**
  * Cancel a timer session
+ * Saves the elapsed time so it shows in the dashboard, but doesn't count in stats
  */
 export async function cancelTimerSession(
   sessionId: string
@@ -343,13 +346,38 @@ export async function cancelTimerSession(
 
     const userId = session.user.id;
 
-    // Update session
+    // Get the current session to calculate elapsed time
+    const existingSession = await db
+      .select()
+      .from(studySession)
+      .where(
+        and(
+          eq(studySession.id, sessionId),
+          eq(studySession.userId, userId)
+        )
+      )
+      .limit(1);
+
+    if (existingSession.length === 0) {
+      return { success: false, error: "Session not found" };
+    }
+
+    const current = existingSession[0];
+    const now = new Date();
+
+    // Calculate actual elapsed time in seconds
+    const elapsedSeconds = Math.floor(
+      (now.getTime() - new Date(current.startTime).getTime()) / 1000
+    );
+
+    // Update session with cancelled status and actual elapsed duration
     const updated = await db
       .update(studySession)
       .set({
         status: "cancelled",
-        endTime: new Date(),
-        updatedAt: new Date(),
+        endTime: now,
+        duration: elapsedSeconds, // Save the actual elapsed time
+        updatedAt: now,
       })
       .where(
         and(

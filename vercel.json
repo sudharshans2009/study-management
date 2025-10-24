@@ -3,6 +3,14 @@
     {
       "path": "/api/cron/reset-goals",
       "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/update-streaks",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/update-scores",
+      "schedule": "0 * * * *"
     }
   ]
 }

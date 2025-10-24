@@ -39,8 +39,8 @@ const routes = [
     icon: Users,
   },
   {
-    label: "Leaderboard",
-    href: "/leaderboard",
+    label: "Leaderboards",
+    href: "/leaderboards",
     icon: Trophy,
   },
 ];

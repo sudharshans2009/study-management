@@ -84,6 +84,7 @@ export interface UseTimerOptions {
   onComplete?: (session: TimerSession) => void;
   onTick?: (timeLeft: number) => void;
   autoSaveInterval?: number; // seconds
+  onStopRequested?: () => void; // Called when stop button is clicked, before confirmation
 }
 
 export interface UseTimerReturn {
@@ -98,12 +99,14 @@ export interface UseTimerReturn {
   start: (duration: number, subjectId?: string, type?: TimerType) => Promise<void>;
   pause: () => Promise<void>;
   resume: () => Promise<void>;
-  stop: () => Promise<void>;
+  stop: () => Promise<void>; // Now triggers confirmation dialog
+  cancel: () => Promise<void>; // Actually cancel the session
   complete: (focusScore?: number, notes?: string) => Promise<void>;
   
   // Utilities
   formatTime: (seconds: number) => string;
   getProgress: () => number;
+  getElapsedTime: () => number; // Get elapsed time in seconds
   
   // Pomodoro specific
   pomodoroCount: number;
@@ -439,8 +442,23 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
     }
   }, [session, startCountdown, startAutoSave, broadcast]);
 
-  // Stop/cancel timer
-  const stop = useCallback(async () => {
+  // Calculate elapsed time
+  const getElapsedTime = useCallback((): number => {
+    return totalDuration - timeLeft;
+  }, [totalDuration, timeLeft]);
+
+  // Stop timer - now triggers confirmation dialog via onStopRequested
+  const stop = useCallback(() => {
+    if (!session) return;
+    
+    // Trigger the confirmation dialog in the component
+    if (options.onStopRequested) {
+      options.onStopRequested();
+    }
+  }, [session, options]);
+
+  // Actually cancel the timer session (called after confirmation)
+  const cancel = useCallback(async () => {
     if (!session) return;
 
     try {
@@ -450,7 +468,7 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
       const result = await cancelTimerSession(session.id);
 
       if (!result.success) {
-        toast.error(result.error || "Failed to stop timer");
+        toast.error(result.error || "Failed to cancel session");
         return;
       }
 
@@ -463,7 +481,7 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
       setPomodoroCount(0);
       setIsBreak(false);
 
-      // Clear localStorage when session is deleted
+      // Clear localStorage when session is cancelled
       clearTimerState();
 
       // Broadcast to other tabs
@@ -473,10 +491,10 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
         timestamp: Date.now(),
       });
 
-      toast.success("Timer stopped");
+      toast.success("Session cancelled - elapsed time saved");
     } catch (error) {
-      console.error("Error stopping timer:", error);
-      toast.error("Failed to stop timer");
+      console.error("Error cancelling timer:", error);
+      toast.error("Failed to cancel session");
     } finally {
       setIsLoading(false);
     }
@@ -762,9 +780,11 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
     pause,
     resume,
     stop,
+    cancel,
     complete,
     formatTime,
     getProgress,
+    getElapsedTime,
     pomodoroCount,
     isBreak,
     startBreak,

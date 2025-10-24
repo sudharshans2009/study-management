@@ -10,6 +10,7 @@ import { TimerControls } from "@/components/timer/timer-controls";
 import { TimerPresets } from "@/components/timer/timer-presets";
 import { SubjectSelector } from "@/components/timer/subject-selector";
 import { SessionSummaryModal } from "@/components/timer/session-summary-modal";
+import { StopConfirmationDialog } from "@/components/timer/stop-confirmation-dialog";
 // import { SessionRecoveryModal } from "@/components/timer/session-recovery-modal";
 import { PomodoroTracker } from "@/components/timer/pomodoro-tracker";
 import { ResumableSessionAlert } from "@/components/timer/resumable-session-alert";
@@ -78,6 +79,7 @@ export default function TimerPage() {
   const [timerMode, setTimerMode] = useState<"timer" | "pomodoro" | "stopwatch">("timer");
   const [showSummary, setShowSummary] = useState(false);
   const [completedSession, setCompletedSession] = useState<TimerSession | null>(null);
+  const [showStopConfirmation, setShowStopConfirmation] = useState(false);
   
   // Session recovery modal state - DISABLED (timer hook handles recovery automatically)
   // const [showRecoveryModal, setShowRecoveryModal] = useState(false);
@@ -93,6 +95,9 @@ export default function TimerPage() {
     onComplete: (session) => {
       setCompletedSession(session);
       setShowSummary(true);
+    },
+    onStopRequested: () => {
+      setShowStopConfirmation(true);
     },
   });
 
@@ -365,6 +370,22 @@ export default function TimerPage() {
           setShowSummary(false);
           setCompletedSession(null);
         }}
+      />
+
+      {/* Stop Confirmation Dialog */}
+      <StopConfirmationDialog
+        open={showStopConfirmation}
+        onOpenChange={setShowStopConfirmation}
+        onComplete={async () => {
+          setShowStopConfirmation(false);
+          await timer.complete();
+        }}
+        onCancel={async () => {
+          setShowStopConfirmation(false);
+          await timer.cancel();
+        }}
+        timeElapsed={timer.formatTime(timer.getElapsedTime())}
+        isStopwatch={timerMode === "stopwatch"}
       />
 
       {/* Session Recovery Modal - DISABLED (timer hook handles recovery automatically)
