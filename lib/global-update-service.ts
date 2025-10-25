@@ -1,5 +1,3 @@
-"use server";
-
 import { db } from "@/database/drizzle";
 import { user, studySession, goal, goalProgress, globalUpdate } from "@/database/schema";
 import { eq, and, between, gte, lt, desc, sql } from "drizzle-orm";
