@@ -68,6 +68,18 @@ export const verification = pgTable("verification", {
     .notNull(),
 });
 
+export const rateLimit = pgTable("rate_limit", {
+  id: text("id").primaryKey(),
+  key: text("key").notNull(),
+  count: integer("count").default(0).notNull(),
+  lastRequest: timestamp("last_request").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at")
+    .defaultNow()
+    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .notNull(),
+});
+
 // Profile table
 export const profile = pgTable("profile", {
   id: text("id").primaryKey(),
