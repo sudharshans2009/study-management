@@ -448,7 +448,7 @@ export function useTimer(options: UseTimerOptions = {}): UseTimerReturn {
   }, [totalDuration, timeLeft]);
 
   // Stop timer - now triggers confirmation dialog via onStopRequested
-  const stop = useCallback(() => {
+  const stop = useCallback(async (): Promise<void> => {
     if (!session) return;
     
     // Trigger the confirmation dialog in the component

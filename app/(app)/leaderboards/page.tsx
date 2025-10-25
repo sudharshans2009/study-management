@@ -19,7 +19,7 @@ export default function LeaderboardsPage() {
           <h1 className="text-3xl font-bold tracking-tight">Leaderboards</h1>
         </div>
         <p className="text-muted-foreground mt-1">
-          Compete with learners worldwide • Scores update hourly
+          Compete with learners worldwide • Daily updates at midnight UTC
         </p>
       </div>
 

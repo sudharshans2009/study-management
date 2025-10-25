@@ -4,10 +4,10 @@ import { user, goal, studySession } from '@/database/schema';
 import { eq, and, gte, sql } from 'drizzle-orm';
 
 /**
- * Cron job to update user streaks every 30 minutes
+ * Cron job to update user streaks daily
  * This endpoint should be called by a cron service (e.g., Vercel Cron, GitHub Actions)
  * 
- * Schedule: Every 30 minutes
+ * Schedule: Daily at 00:00 UTC (0 0 * * *)
  * Purpose: Update current streaks based on user activity in their timezone
  * 
  * Streak logic:

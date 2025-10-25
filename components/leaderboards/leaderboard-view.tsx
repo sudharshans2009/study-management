@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getLeaderboard } from "@/actions/leaderboard-actions";
 import type { LeaderboardMetric, LeaderboardPeriod } from "@/lib/leaderboard-utils";
@@ -9,7 +9,7 @@ import { LeaderboardTable } from "@/components/leaderboards/leaderboard-table";
 import { LeaderboardPodium } from "@/components/leaderboards/leaderboard-podium";
 import { LeaderboardStats } from "@/components/leaderboards/leaderboard-stats";
 import { UserRankCard } from "@/components/leaderboards/user-rank-card";
-import { Loader2, Info } from "lucide-react";
+import { Loader2, Info, Clock } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const METRICS: { value: LeaderboardMetric; label: string; }[] = [
@@ -31,6 +31,30 @@ const PERIODS: { value: LeaderboardPeriod; label: string }[] = [
 export function LeaderboardView() {
   const [metric, setMetric] = useState<LeaderboardMetric>('composite');
   const [period, setPeriod] = useState<LeaderboardPeriod>('monthly');
+
+  // Calculate next update time (daily at 00:00 UTC)
+  const nextUpdateInfo = useMemo(() => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setUTCHours(24, 0, 0, 0); // Next midnight UTC
+    
+    const hoursUntil = Math.floor((tomorrow.getTime() - now.getTime()) / (1000 * 60 * 60));
+    const minutesUntil = Math.floor(((tomorrow.getTime() - now.getTime()) % (1000 * 60 * 60)) / (1000 * 60));
+    
+    // Get local time when update happens
+    const updateTimeLocal = new Date(tomorrow);
+    const timeString = updateTimeLocal.toLocaleTimeString([], { 
+      hour: '2-digit', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    
+    return {
+      hoursUntil,
+      minutesUntil,
+      timeString,
+    };
+  }, []);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ['leaderboard', metric, period],
@@ -66,6 +90,20 @@ export function LeaderboardView() {
 
   return (
     <div className="space-y-6">
+      {/* Update Schedule Info */}
+      <Alert>
+        <Clock className="h-4 w-4" />
+        <AlertDescription>
+          Rankings update daily at midnight UTC (your local time: {nextUpdateInfo.timeString}).
+          {nextUpdateInfo.hoursUntil > 0 && (
+            <> Next update in {nextUpdateInfo.hoursUntil}h {nextUpdateInfo.minutesUntil}m.</>
+          )}
+          {nextUpdateInfo.hoursUntil === 0 && (
+            <> Next update in {nextUpdateInfo.minutesUntil}m.</>
+          )}
+        </AlertDescription>
+      </Alert>
+
       {/* Metric Selector */}
       <Tabs value={metric} onValueChange={(v) => setMetric(v as LeaderboardMetric)}>
         <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6">

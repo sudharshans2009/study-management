@@ -3,10 +3,10 @@ import { db } from '@/database/drizzle';
 import { user } from '@/database/schema';
 
 /**
- * Cron job to update leaderboard scores hourly
+ * Cron job to update leaderboard scores daily
  * This endpoint should be called by a cron service (e.g., Vercel Cron, GitHub Actions)
  * 
- * Schedule: Every hour
+ * Schedule: Daily at 00:00 UTC (0 0 * * *)
  * Purpose: Pre-calculate and cache leaderboard scores to improve performance
  */
 export async function GET(request: NextRequest) {

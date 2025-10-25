@@ -20,13 +20,13 @@ CRON_SECRET=your-secure-random-string-here
 
 ### 1. Update Leaderboard Scores
 - **Path:** `/api/cron/update-scores`
-- **Schedule:** Every hour (`0 * * * *`)
+- **Schedule:** Daily at midnight UTC (`0 0 * * *`)
 - **Purpose:** Pre-calculate and cache leaderboard scores to improve performance
 - **Description:** Processes all users and updates their composite scores based on study time, sessions, goals, streaks, and focus scores.
 
 ### 2. Update Streaks
 - **Path:** `/api/cron/update-streaks`
-- **Schedule:** Every 30 minutes (`*/30 * * * *`)
+- **Schedule:** Daily at midnight UTC (`0 0 * * *`)
 - **Purpose:** Update user study streaks based on their timezone
 - **Description:** 
   - Checks each user's activity in their local timezone
@@ -37,7 +37,7 @@ CRON_SECRET=your-secure-random-string-here
 
 ### 3. Reset Goals
 - **Path:** `/api/cron/reset-goals`
-- **Schedule:** Every 30 minutes (`*/30 * * * *`)
+- **Schedule:** Daily at midnight UTC (`0 0 * * *)
 - **Purpose:** Reset periodic goals (daily, weekly, monthly) based on user timezone
 - **Description:** Resets goal progress when the period ends, maintaining streak information.
 
@@ -52,15 +52,15 @@ The cron jobs are automatically configured via `vercel.json`:
   "crons": [
     {
       "path": "/api/cron/reset-goals",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/update-streaks",
-      "schedule": "*/30 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/update-scores",
-      "schedule": "0 * * * *"
+      "schedule": "0 0 * * *"
     }
   ]
 }
