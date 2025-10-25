@@ -61,7 +61,7 @@ export type FileType = keyof typeof MEDIA_CONFIG.ALLOWED_MIME_TYPES;
  */
 export function getFileType(mimeType: string): FileType {
   for (const [type, mimes] of Object.entries(MEDIA_CONFIG.ALLOWED_MIME_TYPES)) {
-    if ((mimes as string[]).includes(mimeType)) {
+    if ((mimes as readonly string[]).includes(mimeType)) {
       return type as FileType;
     }
   }
@@ -76,7 +76,7 @@ export function getFileTypeFromExtension(filename: string): FileType {
   if (!ext) return "image";
 
   for (const [type, extensions] of Object.entries(MEDIA_CONFIG.FILE_EXTENSIONS)) {
-    if ((extensions as string[]).includes(ext)) {
+    if ((extensions as readonly string[]).includes(ext)) {
       return type as FileType;
     }
   }

@@ -2,7 +2,7 @@
  * Type definitions for the media management system
  */
 
-import type { MEDIA_CONFIG } from "./config";
+import { MEDIA_CONFIG } from "./media-config";
 
 /**
  * Valid media categories
