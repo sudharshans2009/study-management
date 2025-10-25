@@ -12,6 +12,8 @@ export const user = pgTable("user", {
     .default("pending_verification")
     .notNull(),
   timezone: text("timezone").default("Asia/Kolkata").notNull(), // User's timezone for goal resets
+  lastActivityAt: timestamp("last_activity_at", { mode: "date" }), // Track user's last activity
+  lastLocalMidnight: timestamp("last_local_midnight", { mode: "date" }), // Last midnight in user's timezone
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -230,3 +232,14 @@ export const goalProgress = pgTable("goal_progress", {
   
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// Global update tracking table
+export const globalUpdate = pgTable("global_update", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  lastUpdateAt: timestamp("last_update_at", { mode: "date" }).notNull(),
+  updateType: text("update_type").notNull(), // 'streaks', 'goals', 'scores', 'cleanup'
+  processedUsers: integer("processed_users").default(0).notNull(),
+  triggeredBy: text("triggered_by"), // User ID who triggered the update, or 'cron'
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+

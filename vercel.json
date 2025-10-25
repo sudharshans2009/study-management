@@ -1,15 +1,7 @@
 {
   "crons": [
     {
-      "path": "/api/cron/reset-goals",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/update-streaks",
-      "schedule": "0 0 * * *"
-    },
-    {
-      "path": "/api/cron/update-scores",
+      "path": "/api/cron/cleanup",
       "schedule": "0 0 * * *"
     }
   ]
