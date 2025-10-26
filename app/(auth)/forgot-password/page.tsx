@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { forgotPasswordSchema, type ForgotPasswordFormData } from "@/lib/validations/auth";
+import { forgotPasswordSchema, type ForgotPasswordFormData } from "@/lib/auth/validations";
 import { forgotPasswordAction } from "@/actions/auth-actions";
 import { Button } from "@/components/ui/button";
 import {

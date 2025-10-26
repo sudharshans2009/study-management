@@ -1,6 +1,6 @@
 "use client";
 
-import { LeaderboardStats as Stats, LeaderboardMetric, formatLeaderboardValue } from "@/lib/leaderboard-utils";
+import { LeaderboardStats as Stats, LeaderboardMetric, formatLeaderboardValue } from "@/lib/leaderboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, TrendingUp, Crown } from "lucide-react";
 

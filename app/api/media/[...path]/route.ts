@@ -3,8 +3,8 @@ import { readFile, stat } from "fs/promises";
 import { existsSync } from "fs";
 import path from "path";
 import { auth } from "@/lib/auth";
-import { sanitizePath, isValidCategory } from "@/lib/media-utils";
-import { getMimeTypeFromExtension } from "@/lib/media-config";
+import { sanitizePath, isValidCategory } from "@/lib/media/utils";
+import { getMimeTypeFromExtension } from "@/lib/media/config";
 
 /**
  * GET handler for serving media files

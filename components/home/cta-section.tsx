@@ -8,7 +8,7 @@ export function CTASection() {
       <div className="container px-4">
         <div className="relative mx-auto max-w-4xl overflow-hidden rounded-3xl border-2 bg-linear-to-br from-primary/10 via-background to-primary/5 p-12 lg:p-16 shadow-xl">
           {/* Decorative grid overlay */}
-          <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_70%)]" />
+          <div className="absolute inset-0 bg-grid-white/5 mask-[radial-gradient(white,transparent_70%)]" />
           
           <div className="relative z-10 text-center">
             <div className="inline-flex items-center gap-2 rounded-full border bg-primary/10 px-4 py-1.5 text-sm font-medium mb-6">

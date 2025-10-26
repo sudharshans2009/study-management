@@ -17,7 +17,7 @@ import {
   getCurrentPeriodWindow,
   type PeriodType,
 } from "@/lib/goal-periods";
-import { isAtUserMidnight } from "@/lib/timezone-utils";
+import { isAtUserMidnight } from "@/lib/timezone";
 
 export type GoalsResult = {
   success: boolean;

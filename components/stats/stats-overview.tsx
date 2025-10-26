@@ -2,7 +2,7 @@
 
 import { Card } from "@/components/ui/card";
 import { Clock, Target, TrendingUp, Award } from "lucide-react";
-import type { StudyStats } from "@/lib/stats-utils";
+import type { StudyStats } from "@/lib/stats";
 import { cn } from "@/lib/utils";
 
 interface StatsOverviewProps {

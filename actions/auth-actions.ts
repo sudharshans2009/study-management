@@ -1,6 +1,6 @@
 "use server";
 
-import { signInSchema, signUpSchema, forgotPasswordSchema } from "@/lib/validations/auth";
+import { signInSchema, signUpSchema, forgotPasswordSchema } from "@/lib/auth/validations";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { cookies } from "next/headers";

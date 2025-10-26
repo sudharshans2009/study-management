@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getStudyStats, getStatsComparison } from "@/actions/stats-actions";
-import type { StatsPeriod } from "@/lib/stats-utils";
+import type { StatsPeriod } from "@/lib/stats";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatsOverview } from "./stats-overview";
 import { TimeDistributionChart } from "./time-distribution-chart";

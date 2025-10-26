@@ -9,14 +9,14 @@ import {
   subject as subjectTable 
 } from "@/database/schema";
 import { eq, and, gte, lte, desc } from "drizzle-orm";
-import type { StudyStats, StatsPeriod } from "@/lib/stats-utils";
+import type { StudyStats, StatsPeriod } from "@/lib/stats";
 import {
   getDateRangeForPeriod,
   generateTimeSeriesData,
   getMostProductiveDay,
   getMostProductiveHour,
   getFocusScoreDistribution,
-} from "@/lib/stats-utils";
+} from "@/lib/stats";
 import { format } from "date-fns";
 
 export type StatsResult = {

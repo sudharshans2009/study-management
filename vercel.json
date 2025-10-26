@@ -1,8 +1,8 @@
 {
-  "crons": [
-    {
-      "path": "/api/cron/cleanup",
-      "schedule": "0 0 * * *"
-    }
+  "comments": [
+    "Cron jobs have been migrated to Upstash QStash",
+    "See docs/UPSTASH_INTEGRATION.md for details",
+    "Run 'bun run setup:qstash' to configure schedules"
   ]
 }
+

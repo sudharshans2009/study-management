@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getLeaderboard } from "@/actions/leaderboard-actions";
-import type { LeaderboardMetric, LeaderboardPeriod } from "@/lib/leaderboard-utils";
+import type { LeaderboardMetric, LeaderboardPeriod } from "@/lib/leaderboard";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LeaderboardTable } from "@/components/leaderboards/leaderboard-table";
 import { LeaderboardPodium } from "@/components/leaderboards/leaderboard-podium";

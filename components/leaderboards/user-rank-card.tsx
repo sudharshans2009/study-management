@@ -1,6 +1,6 @@
 "use client";
 
-import { LeaderboardEntry, LeaderboardMetric, formatLeaderboardValue } from "@/lib/leaderboard-utils";
+import { LeaderboardEntry, LeaderboardMetric, formatLeaderboardValue } from "@/lib/leaderboard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";

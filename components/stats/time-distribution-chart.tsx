@@ -9,7 +9,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import type { StatsPeriod } from "@/lib/stats-utils";
+import type { StatsPeriod } from "@/lib/stats";
 
 interface TimeDistributionChartProps {
   data: Array<{ date: string; minutes: number; sessions: number }>;

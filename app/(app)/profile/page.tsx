@@ -26,7 +26,7 @@ import {
 } from "@/actions/settings-actions";
 import { getSubjectColorClasses } from "@/lib/subject-colors";
 import { cn } from "@/lib/utils";
-import { TIMEZONES, getTimezoneLabel } from "@/lib/timezone-utils";
+import { TIMEZONES, getTimezoneLabel } from "@/lib/timezone";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Globe } from "lucide-react";
 

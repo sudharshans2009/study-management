@@ -1,6 +1,6 @@
 "use server";
 
-import { setupProfileSchema } from "@/lib/validations/auth";
+import { setupProfileSchema } from "@/lib/auth/validations";
 import { getDb } from "@/database/drizzle";
 import { profile, subject, user } from "@/database/schema";
 import { getSessionAction } from "./auth-actions";

@@ -1,5 +1,5 @@
 import path from "path";
-import { MEDIA_CONFIG, type MediaCategory, getFileType } from "./media-config";
+import { MEDIA_CONFIG, type MediaCategory, getFileType } from "./config";
 
 /**
  * Validate file size

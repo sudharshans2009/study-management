@@ -6,7 +6,7 @@ import { db } from "@/database/drizzle";
 import { profile as profileTable, subject as subjectTable, user as userTable } from "@/database/schema";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { isValidTimezone } from "@/lib/timezone-utils";
+import { isValidTimezone } from "@/lib/timezone";
 
 export type SettingsResult = {
   success: boolean;

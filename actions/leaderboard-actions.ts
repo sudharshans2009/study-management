@@ -5,8 +5,8 @@ import { studySession, goal, user } from "@/database/schema";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { eq, and, gte, lte, sql, desc, isNotNull } from "drizzle-orm";
-import type { LeaderboardEntry, LeaderboardStats, LeaderboardPeriod, LeaderboardMetric } from "@/lib/leaderboard-utils";
-import { getLeaderboardDateRange, calculateCompositeScore } from "@/lib/leaderboard-utils";
+import type { LeaderboardEntry, LeaderboardStats, LeaderboardPeriod, LeaderboardMetric } from "@/lib/leaderboard";
+import { getLeaderboardDateRange, calculateCompositeScore } from "@/lib/leaderboard";
 
 /**
  * Get composite leaderboard with weighted scoring

@@ -179,7 +179,7 @@ export async function sendPasswordResetEmail(
 }
 
 /**
- * Send welcome email after successful signup
+ * Send welcome email after successful signup or for batch onboarding
  */
 export async function sendWelcomeEmail(
   to: string,
@@ -188,60 +188,145 @@ export async function sendWelcomeEmail(
   try {
     console.log(`📧 Sending welcome email to: ${to}`);
     const { data, error } = await resend.emails.send({
-      from: "SS.Study <sudharshans2009@gmail.com>", // Using verified email for testing
+      from: "SS.Study <noreply@study.sudharshans.me>",
       to: [to],
-      subject: "Welcome to SS.Study!",
+      subject: "Welcome to SS.Study - Let's Get Started! 🎓",
       html: `
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <meta charset="utf-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Welcome to SS.Study</title>
-          </head>
-          <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <div style="background: linear-gradient(to right, #4f46e5, #7c3aed); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Welcome to SS.Study!</h1>
-            </div>
-            
-            <div style="background: #ffffff; padding: 40px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 10px 10px;">
-              <p style="font-size: 16px; margin-bottom: 20px;">Hi ${name},</p>
-              
-              <p style="font-size: 16px; margin-bottom: 20px;">
-                Welcome aboard! We're thrilled to have you join the SS.Study community.
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to SS.Study</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f5f5f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+          
+          <!-- Header -->
+          <tr>
+            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px 8px 0 0;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 600;">
+                � Welcome to SS.Study!
+              </h1>
+            </td>
+          </tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="padding: 40px;">
+              <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.5;">
+                Hi <strong>${name}</strong>,
               </p>
               
-              <p style="font-size: 16px; margin-bottom: 20px;">
-                Here's what you can do with SS.Study:
+              <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.5;">
+                Welcome to SS.Study! We're excited to help you track your study time, achieve your goals, and stay motivated on your learning journey. 🚀
               </p>
-              
-              <ul style="font-size: 16px; margin-bottom: 30px; padding-left: 20px;">
-                <li style="margin-bottom: 10px;">⏱️ Track your study sessions with our built-in timer</li>
-                <li style="margin-bottom: 10px;">📊 View detailed statistics about your progress</li>
-                <li style="margin-bottom: 10px;">🎯 Set and achieve your learning goals</li>
-                <li style="margin-bottom: 10px;">🏆 Compete with friends on the leaderboard</li>
-                <li style="margin-bottom: 10px;">👥 Join study rooms for collaborative learning</li>
-              </ul>
-              
-              <div style="text-align: center; margin: 40px 0;">
-                <a href="${config.env.url}/dashboard" 
-                   style="background: #4f46e5; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600; font-size: 16px;">
-                  Get Started
-                </a>
-              </div>
-              
-              <p style="font-size: 14px; color: #6b7280; margin-top: 30px;">
-                Need help getting started? Check out our 
-                <a href="${config.env.url}/help" style="color: #4f46e5;">Help Center</a> 
-                or reply to this email.
+
+              <p style="margin: 0 0 30px; color: #333333; font-size: 16px; line-height: 1.5;">
+                Here's how to get started:
               </p>
-            </div>
-            
-            <div style="text-align: center; margin-top: 20px; color: #9ca3af; font-size: 12px;">
-              <p>© ${new Date().getFullYear()} SS.Study. All rights reserved.</p>
-            </div>
-          </body>
-        </html>
+
+              <!-- Features -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom: 30px;">
+                <tr>
+                  <td style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 10px;">
+                    <div style="display: flex; align-items: start;">
+                      <span style="font-size: 24px; margin-right: 12px;">⏱️</span>
+                      <div>
+                        <strong style="color: #333333; font-size: 16px;">Track Your Study Time</strong>
+                        <p style="margin: 5px 0 0; color: #666666; font-size: 14px; line-height: 1.4;">
+                          Use our timer to log your study sessions and see your progress over time.
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr><td style="height: 10px;"></td></tr>
+                <tr>
+                  <td style="padding: 15px; background-color: #f8f9fa; border-radius: 6px;">
+                    <div style="display: flex; align-items: start;">
+                      <span style="font-size: 24px; margin-right: 12px;">🎯</span>
+                      <div>
+                        <strong style="color: #333333; font-size: 16px;">Set Your Goals</strong>
+                        <p style="margin: 5px 0 0; color: #666666; font-size: 14px; line-height: 1.4;">
+                          Create daily, weekly, or monthly goals to stay motivated and on track.
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr><td style="height: 10px;"></td></tr>
+                <tr>
+                  <td style="padding: 15px; background-color: #f8f9fa; border-radius: 6px;">
+                    <div style="display: flex; align-items: start;">
+                      <span style="font-size: 24px; margin-right: 12px;">📊</span>
+                      <div>
+                        <strong style="color: #333333; font-size: 16px;">View Your Stats</strong>
+                        <p style="margin: 5px 0 0; color: #666666; font-size: 14px; line-height: 1.4;">
+                          Analyze your study patterns with detailed statistics and charts.
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr><td style="height: 10px;"></td></tr>
+                <tr>
+                  <td style="padding: 15px; background-color: #f8f9fa; border-radius: 6px;">
+                    <div style="display: flex; align-items: start;">
+                      <span style="font-size: 24px; margin-right: 12px;">🏆</span>
+                      <div>
+                        <strong style="color: #333333; font-size: 16px;">Compete on Leaderboards</strong>
+                        <p style="margin: 5px 0 0; color: #666666; font-size: 14px; line-height: 1.4;">
+                          See how you rank against other learners and stay motivated!
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
+                <tr>
+                  <td align="center">
+                    <a href="https://study.sudharshans.me/dashboard" style="display: inline-block; padding: 14px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
+                      Start Studying Now →
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin: 30px 0 0; color: #666666; font-size: 14px; line-height: 1.5;">
+                Need help getting started? Check out our <a href="https://study.sudharshans.me/help" style="color: #667eea; text-decoration: none;">help center</a> or reply to this email.
+              </p>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding: 30px 40px; background-color: #f8f9fa; border-radius: 0 0 8px 8px; text-align: center;">
+              <p style="margin: 0 0 10px; color: #999999; font-size: 14px;">
+                Happy studying! 📚
+              </p>
+              <p style="margin: 0; color: #999999; font-size: 12px;">
+                © 2025 SS.Study. All rights reserved.
+              </p>
+              <p style="margin: 10px 0 0; color: #999999; font-size: 12px;">
+                <a href="https://study.sudharshans.me" style="color: #667eea; text-decoration: none;">Visit Website</a> •
+                <a href="https://study.sudharshans.me/settings" style="color: #667eea; text-decoration: none;">Settings</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
       `,
     });
 

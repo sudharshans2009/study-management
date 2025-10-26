@@ -13,8 +13,8 @@ import {
   sanitizePath,
   isValidCategory,
   formatFileSize,
-} from "@/lib/media-utils";
-import { getFileTypeFromExtension } from "@/lib/media-config";
+} from "@/lib/media/utils";
+import { getFileTypeFromExtension } from "@/lib/media/config";
 
 export type SaveFileResult = {
   success: boolean;

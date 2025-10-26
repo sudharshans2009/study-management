@@ -6,8 +6,8 @@ export function HeroSection() {
   return (
     <section className="relative overflow-hidden border-b bg-background">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/10" />
-      <div className="absolute inset-0 bg-grid-white/5 [mask-image:radial-gradient(white,transparent_85%)]" />
+      <div className="absolute inset-0 bg-linear-to-br from-primary/5 via-background to-primary/10" />
+      <div className="absolute inset-0 bg-grid-white/5 mask-[radial-gradient(white,transparent_85%)]" />
       
       <div className="container relative">
         <div className="mx-auto flex max-w-5xl flex-col items-center gap-8 py-20 text-center lg:py-32">
@@ -22,7 +22,7 @@ export function HeroSection() {
             <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
               Master Your Study
               <br />
-              <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-primary to-primary/60 bg-clip-text text-transparent">
                 Habits
               </span>
             </h1>
@@ -55,7 +55,7 @@ export function HeroSection() {
                 {[1, 2, 3, 4].map((i) => (
                   <div
                     key={i}
-                    className="h-8 w-8 rounded-full border-2 border-background bg-gradient-to-br from-primary/20 to-primary/40"
+                    className="h-8 w-8 rounded-full border-2 border-background bg-linear-to-br from-primary/20 to-primary/40"
                   />
                 ))}
               </div>

@@ -5,14 +5,46 @@ import { globalUpdate } from "@/database/schema";
 import {
   getUsersNeedingUpdates,
   processUserUpdates,
-  getUserLocalMidnight,
-} from "@/lib/global-update-service";
-import { headers } from "next/headers";
+} from "@/services/global-update";
+import { redis, CACHE_KEYS } from "@/services/redis";
+import { globalUpdateRateLimit } from "@/services/rate-limit";
+import { realtime } from "@/services/realtime";
 import { desc } from "drizzle-orm";
 
 /**
+ * Acquire lock for global updates (prevents concurrent runs)
+ */
+async function acquireGlobalUpdateLock(): Promise<boolean> {
+  try {
+    const lockKey = CACHE_KEYS.GLOBAL_UPDATE_LOCK;
+
+    // Try to set lock with 5 minute expiry
+    const acquired = await redis.set(lockKey, Date.now().toString(), {
+      ex: 300, // 5 minutes
+      nx: true, // Only set if not exists
+    });
+
+    return acquired === "OK";
+  } catch (error) {
+    console.error("[GlobalUpdate] Failed to acquire lock:", error);
+    return false;
+  }
+}
+
+/**
+ * Release lock
+ */
+async function releaseGlobalUpdateLock(): Promise<void> {
+  try {
+    await redis.del(CACHE_KEYS.GLOBAL_UPDATE_LOCK);
+  } catch (error) {
+    console.error("[GlobalUpdate] Failed to release lock:", error);
+  }
+}
+
+/**
  * Process global lazy updates for all users
- * This is called when any user accesses the site
+ * This is called when any user accesses the site or via QStash cron
  */
 export async function processGlobalLazyUpdates(
   triggeredByUserId?: string
@@ -21,59 +53,114 @@ export async function processGlobalLazyUpdates(
   processedUsers: number;
   error?: string;
 }> {
+  // Check rate limit
+  const { success: rateLimitPassed } = await globalUpdateRateLimit.limit("global");
+  if (!rateLimitPassed) {
+    console.log("[GlobalUpdate] Rate limited, skipping");
+    return {
+      success: true,
+      processedUsers: 0,
+    };
+  }
+
+  // Acquire lock
+  const lockAcquired = await acquireGlobalUpdateLock();
+  if (!lockAcquired) {
+    console.log("[GlobalUpdate] Another update is in progress, skipping");
+    return {
+      success: true,
+      processedUsers: 0,
+    };
+  }
+
   try {
     const now = new Date();
-    
+
+    // TODO: Fix Realtime type inference
+    // Emit realtime event - update started
+    // try {
+    //   await realtime.emit("globalUpdateStarted", {
+    //     triggeredBy: triggeredByUserId || "system",
+    //     timestamp: now.getTime(),
+    //   });
+    // } catch (error) {
+    //   console.error("[GlobalUpdate] Failed to emit start event:", error);
+    // }
+
     // Get all users that need updates
     const usersNeedingUpdate = await getUsersNeedingUpdates();
-    
+
     if (usersNeedingUpdate.length === 0) {
       return {
         success: true,
         processedUsers: 0,
       };
     }
-    
+
+    console.log(`[GlobalUpdate] Processing ${usersNeedingUpdate.length} users`);
+
     // Process each user
     let processedCount = 0;
     for (const user of usersNeedingUpdate) {
       try {
-        const fromDate = user.lastLocalMidnight || user.lastActivityAt || new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        const fromDate =
+          user.lastLocalMidnight ||
+          user.lastActivityAt ||
+          new Date(now.getTime() - 24 * 60 * 60 * 1000);
         const toDate = now;
-        
+
         await processUserUpdates(
           user.id,
           user.timezone || "UTC",
           fromDate,
           toDate
         );
-        
+
         processedCount++;
       } catch (error) {
-        console.error(`Failed to process updates for user ${user.id}:`, error);
+        console.error(
+          `[GlobalUpdate] Failed to process user ${user.id}:`,
+          error
+        );
         // Continue processing other users
       }
     }
-    
+
     // Log the global update
     await db.insert(globalUpdate).values({
       lastUpdateAt: now,
-      updateType: "lazy",
+      updateType: triggeredByUserId || "lazy",
       processedUsers: processedCount,
       triggeredBy: triggeredByUserId || "system",
     });
-    
+
+    // TODO: Fix Realtime type inference
+    // Emit realtime event - update completed
+    // try {
+    //   await realtime.emit("globalUpdateCompleted", {
+    //     processedUsers: processedCount,
+    //     timestamp: Date.now(),
+    //   });
+    // } catch (error) {
+    //   console.error("[GlobalUpdate] Failed to emit completion event:", error);
+    // }
+
+    console.log(`[GlobalUpdate] Completed: ${processedCount} users processed`);
+
     return {
       success: true,
       processedUsers: processedCount,
     };
   } catch (error) {
-    console.error("Global lazy update failed:", error);
+    console.error("[GlobalUpdate] Failed:", error);
     return {
       success: false,
       processedUsers: 0,
       error: error instanceof Error ? error.message : "Unknown error",
     };
+  } finally {
+    // Always release lock
+    await releaseGlobalUpdateLock();
   }
 }
 

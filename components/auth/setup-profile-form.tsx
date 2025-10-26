@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { setupProfileSchema, type SetupProfileFormData } from "@/lib/validations/auth";
+import { setupProfileSchema, type SetupProfileFormData } from "@/lib/auth/validations";
 import { setupProfileAction } from "@/actions/setup-actions";
 import { Button } from "@/components/ui/button";
 import {
@@ -30,7 +30,7 @@ import { Loader2, Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { getSubjectColorClasses } from "@/lib/subject-colors";
 import { cn } from "@/lib/utils";
-import { TIMEZONES, detectBrowserTimezone } from "@/lib/timezone-utils";
+import { TIMEZONES, detectBrowserTimezone } from "@/lib/timezone";
 
 const PRESET_COLORS = [
   "#3B82F6", // blue

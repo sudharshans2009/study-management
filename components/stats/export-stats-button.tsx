@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
-import type { StudyStats } from "@/lib/stats-utils";
+import type { StudyStats } from "@/lib/stats";
 
 interface ExportStatsButtonProps {
   stats: StudyStats;
