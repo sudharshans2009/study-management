@@ -124,88 +124,90 @@ export function GoalDetailView({ goalId }: GoalDetailViewProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div>
-        <Button variant="ghost" asChild className="mb-4">
-          <Link href="/goals">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Goals
-          </Link>
-        </Button>
-        <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{goal.title}</h1>
-            {goal.description && (
-              <p className="text-muted-foreground">{goal.description}</p>
-            )}
-            <div className="flex items-center gap-2 mt-3">
-              <Badge variant="outline" className="capitalize">
-                {goal.period}
-              </Badge>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="flex items-center gap-2 mb-2">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/goals">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Goals
+              </Link>
+            </Button>
+          </div>
+          <h1 className="text-3xl font-bold flex items-center gap-2">
+            {goal.title}
+          </h1>
+          {goal.description && (
+            <p className="text-muted-foreground mt-1">{goal.description}</p>
+          )}
+          <div className="flex items-center gap-2 mt-3">
+            <Badge variant="outline" className="capitalize">
+              {goal.period}
+            </Badge>
+            <Badge variant="secondary">
+              Target: {formatValue(goal.target, goal.unit)}
+            </Badge>
+            {goal.endDate && (
               <Badge variant="secondary">
-                Target: {formatValue(goal.target, goal.unit)}
+                {goal.endReason === "completed" ? "Completed" : "Archived"}
               </Badge>
-              {goal.endDate && (
-                <Badge variant="secondary">
-                  {goal.endReason === "completed" ? "Completed" : "Archived"}
-                </Badge>
-              )}
-            </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Periods</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalPeriods}</div>
-            <p className="text-xs text-muted-foreground">
-              Since {format(new Date(goal.startDate || goal.createdAt), "MMM dd, yyyy")}
-            </p>
-          </CardContent>
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Total Periods</p>
+              <p className="text-3xl font-bold mt-1">{totalPeriods}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Since {format(new Date(goal.startDate || goal.createdAt), "MMM dd, yyyy")}
+              </p>
+            </div>
+            <Calendar className="h-10 w-10 text-primary opacity-20" />
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Completed</CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{completedPeriods}</div>
-            <p className="text-xs text-muted-foreground">
-              {completionRate}% completion rate
-            </p>
-          </CardContent>
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Completed</p>
+              <p className="text-3xl font-bold mt-1">{completedPeriods}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {completionRate}% completion rate
+              </p>
+            </div>
+            <CheckCircle2 className="h-10 w-10 text-green-500 opacity-20" />
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Streak</CardTitle>
-            <Flame className="h-4 w-4 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{goal.currentStreak ?? 0}</div>
-            <p className="text-xs text-muted-foreground">
-              {goal.period}s in a row
-            </p>
-          </CardContent>
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Current Streak</p>
+              <p className="text-3xl font-bold mt-1">{goal.currentStreak ?? 0}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {goal.period}s in a row
+              </p>
+            </div>
+            <Flame className="h-10 w-10 text-orange-500 opacity-20" />
+          </div>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Longest Streak</CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{goal.longestStreak ?? 0}</div>
-            <p className="text-xs text-muted-foreground">Personal best</p>
-          </CardContent>
+        <Card className="p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-muted-foreground">Longest Streak</p>
+              <p className="text-3xl font-bold mt-1">{goal.longestStreak ?? 0}</p>
+              <p className="text-xs text-muted-foreground mt-1">Personal best</p>
+            </div>
+            <Award className="h-10 w-10 text-primary opacity-20" />
+          </div>
         </Card>
       </div>
 

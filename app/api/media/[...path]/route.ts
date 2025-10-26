@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
-import { readFile, stat } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
+import { head } from "@vercel/blob";
 import { auth } from "@/lib/auth";
 import { sanitizePath, isValidCategory } from "@/lib/media/utils";
-import { getMimeTypeFromExtension } from "@/lib/media/config";
 
 /**
- * GET handler for serving media files
+ * Helper to build blob pathname from path segments
+ */
+function buildBlobPathname(pathSegments: string[]): string {
+  return pathSegments.join("/");
+}
+
+/**
+ * GET handler for serving media files - redirects to Vercel Blob CDN
  * Route: /api/media/[...path]
  * Example: /api/media/profile/user/1234.jpg
  */
@@ -39,51 +43,19 @@ export async function GET(
       return NextResponse.json({ error: "Invalid category" }, { status: 400 });
     }
 
-    // Build file path
-    const filename = sanitized[sanitized.length - 1];
-    const directories = sanitized.slice(0, -1);
-    const filePath = path.join(process.cwd(), "media", ...directories, filename);
+    // Build blob pathname
+    const pathname = buildBlobPathname(sanitized);
 
-    // Check if file exists
-    if (!existsSync(filePath)) {
+    // Get blob metadata
+    const blob = await head(pathname);
+
+    if (!blob) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
-    // Get file stats
-    const stats = await stat(filePath);
-    
-    // Security check: ensure it's a file, not a directory
-    if (!stats.isFile()) {
-      return NextResponse.json({ error: "Invalid file" }, { status: 400 });
-    }
-
-    // Read file
-    const fileBuffer = await readFile(filePath);
-
-    // Determine MIME type
-    const mimeType = getMimeTypeFromExtension(filename);
-
-    // Set cache headers
-    const headers = new Headers();
-    headers.set("Content-Type", mimeType);
-    headers.set("Content-Length", stats.size.toString());
-    headers.set("Cache-Control", "public, max-age=31536000, immutable");
-    headers.set("Last-Modified", stats.mtime.toUTCString());
-
-    // Handle conditional requests (ETag)
-    const etag = `"${stats.size}-${stats.mtime.getTime()}"`;
-    headers.set("ETag", etag);
-
-    const ifNoneMatch = request.headers.get("if-none-match");
-    if (ifNoneMatch === etag) {
-      return new NextResponse(null, { status: 304, headers });
-    }
-
-    // Return file
-    return new NextResponse(fileBuffer as unknown as BodyInit, {
-      status: 200,
-      headers,
-    });
+    // Redirect to the Vercel Blob CDN URL
+    // This allows the CDN to handle caching, compression, and delivery
+    return NextResponse.redirect(blob.url, 307);
   } catch (error) {
     console.error("Error serving media file:", error);
     return NextResponse.json(
@@ -120,25 +92,18 @@ export async function HEAD(
       return new NextResponse(null, { status: 400 });
     }
 
-    const filename = sanitized[sanitized.length - 1];
-    const directories = sanitized.slice(0, -1);
-    const filePath = path.join(process.cwd(), "media", ...directories, filename);
+    const pathname = buildBlobPathname(sanitized);
 
-    if (!existsSync(filePath)) {
+    // Get blob metadata
+    const blob = await head(pathname);
+
+    if (!blob) {
       return new NextResponse(null, { status: 404 });
     }
 
-    const stats = await stat(filePath);
-    
-    if (!stats.isFile()) {
-      return new NextResponse(null, { status: 400 });
-    }
-
     const headers = new Headers();
-    headers.set("Content-Type", getMimeTypeFromExtension(filename));
-    headers.set("Content-Length", stats.size.toString());
-    headers.set("Last-Modified", stats.mtime.toUTCString());
-    headers.set("ETag", `"${stats.size}-${stats.mtime.getTime()}"`);
+    headers.set("Content-Length", blob.size.toString());
+    headers.set("Cache-Control", "public, max-age=31536000, immutable");
 
     return new NextResponse(null, { status: 200, headers });
   } catch (error) {

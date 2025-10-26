@@ -1,16 +1,11 @@
 "use server";
 
-import { writeFile, mkdir, unlink, readdir, stat } from "fs/promises";
-import { existsSync } from "fs";
-import path from "path";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
+import { put, del, list, head } from "@vercel/blob";
 import {
   validateFile,
-  buildMediaPath,
-  buildMediaUrl,
   generateUniqueFilename,
-  sanitizePath,
   isValidCategory,
   formatFileSize,
 } from "@/lib/media/utils";
@@ -46,7 +41,14 @@ async function getSession() {
 }
 
 /**
- * Save a file to the media directory
+ * Build blob pathname from path segments and filename
+ */
+function buildBlobPathname(pathSegments: string[], filename: string): string {
+  return `${pathSegments.join("/")}/${filename}`;
+}
+
+/**
+ * Save a file to Vercel Blob storage
  * @param file - The file to save
  * @param pathSegments - Path segments (e.g., ["profile", "user"])
  * @param filename - Optional custom filename (will be sanitized)
@@ -90,30 +92,19 @@ export async function saveFile(
       ? generateUniqueFilename(filename, userId || session.user.id)
       : generateUniqueFilename(file.name, userId || session.user.id);
 
-    // Build file path
-    const filePath = buildMediaPath(pathSegments, finalFilename);
-    const fullPath = path.join(process.cwd(), filePath);
+    // Build pathname for Vercel Blob
+    const pathname = buildBlobPathname(pathSegments, finalFilename);
 
-    // Create directory if it doesn't exist
-    const dir = path.dirname(fullPath);
-    if (!existsSync(dir)) {
-      await mkdir(dir, { recursive: true });
-    }
-
-    // Convert file to buffer
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
-    // Write file
-    await writeFile(fullPath, buffer);
-
-    // Build URL
-    const url = buildMediaUrl(pathSegments, finalFilename);
+    // Upload to Vercel Blob
+    const blob = await put(pathname, file, {
+      access: "public",
+      addRandomSuffix: false, // We already add unique suffix
+    });
 
     return {
       success: true,
-      url,
-      path: filePath,
+      url: blob.url,
+      path: pathname,
       filename: finalFilename,
     };
   } catch (error) {
@@ -126,7 +117,7 @@ export async function saveFile(
 }
 
 /**
- * Delete a file from the media directory
+ * Delete a file from Vercel Blob storage
  * @param pathSegments - Path segments (e.g., ["profile", "user"])
  * @param filename - Filename to delete
  * @returns Success status or error
@@ -147,17 +138,11 @@ export async function deleteFile(
       return { success: false, error: "Invalid category" };
     }
 
-    // Build file path
-    const filePath = buildMediaPath(pathSegments, filename);
-    const fullPath = path.join(process.cwd(), filePath);
+    // Build pathname
+    const pathname = buildBlobPathname(pathSegments, filename);
 
-    // Check if file exists
-    if (!existsSync(fullPath)) {
-      return { success: false, error: "File not found" };
-    }
-
-    // Delete file
-    await unlink(fullPath);
+    // Delete from Vercel Blob
+    await del(pathname);
 
     return { success: true };
   } catch (error) {
@@ -170,7 +155,7 @@ export async function deleteFile(
 }
 
 /**
- * List files in a directory
+ * List files in Vercel Blob storage with a specific prefix
  * @param pathSegments - Path segments (e.g., ["profile", "user"])
  * @returns Array of file information or error
  */
@@ -189,36 +174,26 @@ export async function listFiles(
       return { success: false, error: "Invalid category" };
     }
 
-    // Build directory path
-    const sanitized = sanitizePath(pathSegments);
-    const dirPath = path.join(process.cwd(), "media", ...sanitized);
+    // Build prefix for listing
+    const prefix = pathSegments.join("/") + "/";
 
-    // Check if directory exists
-    if (!existsSync(dirPath)) {
-      return { success: true, files: [] };
-    }
+    // List blobs with prefix
+    const { blobs } = await list({ prefix });
 
-    // Read directory
-    const entries = await readdir(dirPath);
-    const files: FileInfo[] = [];
-
-    for (const entry of entries) {
-      const fullPath = path.join(dirPath, entry);
-      const stats = await stat(fullPath);
-
-      if (stats.isFile()) {
-        const fileType = getFileTypeFromExtension(entry);
-        files.push({
-          name: entry,
-          path: buildMediaPath(pathSegments, entry),
-          url: buildMediaUrl(pathSegments, entry),
-          size: stats.size,
-          formattedSize: formatFileSize(stats.size),
-          type: fileType,
-          createdAt: stats.birthtime,
-        });
-      }
-    }
+    const files: FileInfo[] = blobs.map((blob) => {
+      const filename = blob.pathname.split("/").pop() || "";
+      const fileType = getFileTypeFromExtension(filename);
+      
+      return {
+        name: filename,
+        path: blob.pathname,
+        url: blob.url,
+        size: blob.size,
+        formattedSize: formatFileSize(blob.size),
+        type: fileType,
+        createdAt: new Date(blob.uploadedAt),
+      };
+    });
 
     // Sort by creation date (newest first)
     files.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
@@ -234,7 +209,7 @@ export async function listFiles(
 }
 
 /**
- * Get file information
+ * Get file information from Vercel Blob
  * @param pathSegments - Path segments
  * @param filename - Filename
  * @returns File information or error
@@ -250,27 +225,26 @@ export async function getFileInfo(
       return { success: false, error: "Unauthorized" };
     }
 
-    // Build file path
-    const filePath = buildMediaPath(pathSegments, filename);
-    const fullPath = path.join(process.cwd(), filePath);
+    // Build pathname
+    const pathname = buildBlobPathname(pathSegments, filename);
 
-    // Check if file exists
-    if (!existsSync(fullPath)) {
+    // Get blob metadata using head
+    const blobHead = await head(pathname);
+
+    if (!blobHead) {
       return { success: false, error: "File not found" };
     }
 
-    // Get file stats
-    const stats = await stat(fullPath);
     const fileType = getFileTypeFromExtension(filename);
 
     const file: FileInfo = {
       name: filename,
-      path: filePath,
-      url: buildMediaUrl(pathSegments, filename),
-      size: stats.size,
-      formattedSize: formatFileSize(stats.size),
+      path: pathname,
+      url: blobHead.url,
+      size: blobHead.size,
+      formattedSize: formatFileSize(blobHead.size),
       type: fileType,
-      createdAt: stats.birthtime,
+      createdAt: new Date(blobHead.uploadedAt),
     };
 
     return { success: true, file };
@@ -284,7 +258,7 @@ export async function getFileInfo(
 }
 
 /**
- * Move/rename a file
+ * Move/rename a file in Vercel Blob (copy + delete)
  * @param oldPathSegments - Current path segments
  * @param oldFilename - Current filename
  * @param newPathSegments - New path segments
@@ -309,31 +283,36 @@ export async function moveFile(
       return { success: false, error: "Invalid category" };
     }
 
-    // Build paths
-    const oldPath = path.join(process.cwd(), buildMediaPath(oldPathSegments, oldFilename));
-    const newPath = path.join(process.cwd(), buildMediaPath(newPathSegments, newFilename));
+    // Build pathnames
+    const oldPathname = buildBlobPathname(oldPathSegments, oldFilename);
+    const newPathname = buildBlobPathname(newPathSegments, newFilename);
 
-    // Check if old file exists
-    if (!existsSync(oldPath)) {
+    // Get the old blob to copy its content
+    const oldBlob = await head(oldPathname);
+    
+    if (!oldBlob) {
       return { success: false, error: "Source file not found" };
     }
 
-    // Create new directory if needed
-    const newDir = path.dirname(newPath);
-    if (!existsSync(newDir)) {
-      await mkdir(newDir, { recursive: true });
+    // Fetch the blob content
+    const response = await fetch(oldBlob.url);
+    if (!response.ok) {
+      return { success: false, error: "Failed to fetch source file" };
     }
 
-    // Move file (rename in Node.js)
-    const { rename } = await import("fs/promises");
-    await rename(oldPath, newPath);
+    // Upload to new location
+    const newBlob = await put(newPathname, await response.blob(), {
+      access: "public",
+      addRandomSuffix: false,
+    });
 
-    const url = buildMediaUrl(newPathSegments, newFilename);
+    // Delete old blob
+    await del(oldPathname);
 
     return {
       success: true,
-      url,
-      path: buildMediaPath(newPathSegments, newFilename),
+      url: newBlob.url,
+      path: newPathname,
       filename: newFilename,
     };
   } catch (error) {

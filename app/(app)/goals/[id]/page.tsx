@@ -4,6 +4,12 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { GoalDetailView } from "@/components/goals/goal-detail-view";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Goal Details | Goals | SS.Study",
+  description: "View detailed progress, history, and statistics for your study goal",
+};
 
 interface GoalDetailPageProps {
   params: Promise<{
@@ -23,7 +29,7 @@ export default async function GoalDetailPage({ params }: GoalDetailPageProps) {
   }
 
   return (
-    <div className="container max-w-6xl py-8">
+    <div className="container mx-auto p-6 max-w-7xl">
       <Suspense fallback={<GoalDetailSkeleton />}>
         <GoalDetailView goalId={id} />
       </Suspense>

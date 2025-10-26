@@ -11,6 +11,9 @@ import { getUserGoalsWithProgress } from "@/actions/goals-actions";
 import { toast } from "sonner";
 import { useGoalPeriodCheck } from "@/hooks/use-goal-period-check";
 
+// Note: Metadata must be exported from a layout.tsx or a Server Component
+// Since this is a Client Component, metadata should be in a parent layout
+
 type GoalWithProgress = {
   id: string;
   title: string;

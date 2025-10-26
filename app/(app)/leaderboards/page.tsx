@@ -5,8 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Trophy } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Leaderboards | Study Tracker",
-  description: "Compete with other learners and track your rankings",
+  title: "Leaderboards | SS.Study",
+  description: "Compete with learners worldwide, track your rankings, and climb the global study leaderboards",
 };
 
 export default function LeaderboardsPage() {

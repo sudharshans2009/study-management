@@ -5,8 +5,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart3 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Statistics | Study Tracker",
-  description: "View your study statistics and progress",
+  title: "Statistics | SS.Study",
+  description: "View detailed study statistics, analyze your performance, and track your progress over time",
 };
 
 export default function StatsPage() {
